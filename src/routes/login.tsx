@@ -1,10 +1,8 @@
 import { Link, createFileRoute, redirect, useHydrated, useRouter } from '@tanstack/react-router'
-import { CircleCheck, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Field, FieldError, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
@@ -64,7 +62,11 @@ function LoginPage() {
   return (
     <AuthCard
       title="Bon retour"
-      subtitle="Connectez-vous pour gérer vos événements."
+      subtitle={
+        search.passwordSet
+          ? 'Votre mot de passe est enregistré. Connectez-vous ci-dessous.'
+          : 'Connectez-vous pour gérer vos événements.'
+      }
       footer={
         <p>
           Pas encore de compte ?{' '}
@@ -76,12 +78,6 @@ function LoginPage() {
     >
       <form method="post" onSubmit={onSubmit}>
         <FieldGroup>
-          {search.passwordSet && (
-            <Alert>
-              <CircleCheck className="text-emerald-600" />
-              <AlertDescription>Votre mot de passe est enregistré. Connectez-vous ci-dessous.</AlertDescription>
-            </Alert>
-          )}
           <Field>
             <FieldLabel htmlFor="login-email">E-mail</FieldLabel>
             <Input
@@ -98,12 +94,7 @@ function LoginPage() {
             <FieldLabel htmlFor="login-password">Mot de passe</FieldLabel>
             <Input id="login-password" type="password" name="password" autoComplete="current-password" required />
           </Field>
-          {error && (
-            <Alert variant="destructive">
-              <TriangleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {error && <FieldError>{error}</FieldError>}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
             {pending && <Spinner />} Se connecter
           </Button>

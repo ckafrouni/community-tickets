@@ -20,7 +20,10 @@ export default defineConfig(({ mode }) => ({
       EMAIL_FROM: bindings.text(SENDER),
       APP_URL: bindings.text((mode && LOCAL_URLS[mode]) || `https://${DOMAIN}`),
       ADMIN_EMAIL: bindings.text('chris.kafrouni@gmail.com'),
-      LOGIN_RATE_LIMITER: bindings.rateLimit({ namespace: '1001', simple: { limit: 5, period: 60 } }),
+      LOGIN_RATE_LIMITER: bindings.rateLimit({
+        namespace: '1001',
+        simple: { limit: mode === 'e2e' ? 1000 : 5, period: 60 },
+      }),
       BETTER_AUTH_SECRET: bindings.secret(),
       TICKET_SECRET: bindings.secret(),
     },

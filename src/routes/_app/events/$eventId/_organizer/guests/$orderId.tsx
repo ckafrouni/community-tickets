@@ -528,7 +528,7 @@ function TicketCard({
           <Dialog>
             <DialogTrigger
               aria-label="Afficher le QR code en plein écran"
-              className="block w-48 rounded-2xl p-1 ring-1 ring-foreground/10 transition hover:ring-foreground/30"
+              className="block w-48 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <QrImage svg={ticket.qrSvg} label={`QR code du billet ${code}`} />
             </DialogTrigger>

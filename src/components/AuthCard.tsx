@@ -10,7 +10,7 @@ export function AuthCard({
 }: {
   title: string
   subtitle?: string
-  children: ReactNode
+  children?: ReactNode
   footer?: ReactNode
 }) {
   return (
@@ -19,9 +19,11 @@ export function AuthCard({
         <Logo className="mb-6 size-14 rounded-2xl shadow-sm ring-1 ring-foreground/10" />
         <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">{title}</h1>
         {subtitle && <p className="mt-1.5 text-[15px] text-muted-foreground">{subtitle}</p>}
-        <Card className="mt-6">
-          <CardContent>{children}</CardContent>
-        </Card>
+        {children && (
+          <Card className="mt-6">
+            <CardContent>{children}</CardContent>
+          </Card>
+        )}
         {footer && (
           <div className="mt-5 flex flex-col gap-2 text-center text-[15px] text-muted-foreground">{footer}</div>
         )}

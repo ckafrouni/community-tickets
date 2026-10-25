@@ -1,4 +1,4 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronRight, Download, MailX, Search, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PageHeader, PersonAvatar } from '#/components/common'
@@ -40,16 +40,18 @@ function GuestsPage() {
   const { eventId } = Route.useParams()
   const { q = '' } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const router = useRouter()
   const [query, setQuery] = useState(q)
   const [filter, setFilter] = useState<Filter>('all')
 
   useEffect(() => {
     if (query.trim() === q) return
     const timer = setTimeout(() => {
+      if (router.latestLocation.pathname.replace(/\/$/, '') !== `/events/${eventId}/guests`) return
       void navigate({ search: { q: query.trim() || undefined }, replace: true })
     }, 250)
     return () => clearTimeout(timer)
-  }, [query, q, navigate])
+  }, [query, q, navigate, router, eventId])
 
   const shown = orders.filter((o) => matches(o, filter))
   const percent = stats.ticketsSold ? Math.round((stats.checkedIn / stats.ticketsSold) * 100) : 0

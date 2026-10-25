@@ -251,20 +251,13 @@ function SellPage() {
                       : `L’acheteur reçoit une demande de virement de ${money(remaining)} avec une référence. Les billets partent dès que vous enregistrez le paiement.`}
                   </FieldDescription>
                   {!paidNow && !event.bankDetails && (
-                    <Alert>
-                      <Info />
-                      <AlertDescription>
-                        Ajoutez vos coordonnées bancaires dans{' '}
-                        <Link
-                          to="/events/$eventId/settings"
-                          params={{ eventId: event.id }}
-                          className="font-medium underline"
-                        >
-                          Réglages
-                        </Link>{' '}
-                        pour qu’elles figurent dans l’e-mail.
-                      </AlertDescription>
-                    </Alert>
+                    <FieldDescription>
+                      Ajoutez vos coordonnées bancaires dans{' '}
+                      <Link to="/events/$eventId/settings" params={{ eventId: event.id }}>
+                        Réglages
+                      </Link>{' '}
+                      pour qu’elles figurent dans l’e-mail.
+                    </FieldDescription>
                   )}
                 </FieldGroup>
               </CardContent>

@@ -1,10 +1,8 @@
 import { Link, createFileRoute, useHydrated, useNavigate } from '@tanstack/react-router'
-import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Field, FieldError, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { authClient } from '#/lib/auth-client'
@@ -32,6 +30,7 @@ function ResetPasswordPage() {
     return (
       <AuthCard
         title="Ce lien a expiré"
+        subtitle="Le lien est invalide ou date de plus de 24 heures. Demandez-en un nouveau."
         footer={
           <p>
             <Link to="/forgot-password" className={authLinkClass}>
@@ -39,14 +38,7 @@ function ResetPasswordPage() {
             </Link>
           </p>
         }
-      >
-        <Alert variant="destructive">
-          <TriangleAlert />
-          <AlertDescription>
-            Le lien est invalide ou date de plus de 24 heures. Demandez-en un nouveau.
-          </AlertDescription>
-        </Alert>
-      </AuthCard>
+      />
     )
   }
 
@@ -95,12 +87,7 @@ function ResetPasswordPage() {
               required
             />
           </Field>
-          {error && (
-            <Alert variant="destructive">
-              <TriangleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {error && <FieldError>{error}</FieldError>}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
             {pending && <Spinner />} Enregistrer
           </Button>

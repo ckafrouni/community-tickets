@@ -1,10 +1,8 @@
 import { Link, createFileRoute, redirect, useHydrated } from '@tanstack/react-router'
-import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
@@ -112,12 +110,7 @@ function SignupPage() {
             />
             <FieldDescription>Au moins {MIN_LENGTH} caractères.</FieldDescription>
           </Field>
-          {error && (
-            <Alert variant="destructive">
-              <TriangleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {error && <FieldError>{error}</FieldError>}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
             {pending && <Spinner />} Créer mon compte
           </Button>

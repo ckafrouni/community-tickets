@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { deviceOptions, expectFitsScreen, expectTouchTarget, linkIn, screenshotter, waitForEmail } from './helpers'
+import {
+  deviceOptions,
+  expectCleanChrome,
+  expectFitsScreen,
+  expectTouchTarget,
+  linkIn,
+  screenshotter,
+  waitForEmail,
+} from './helpers'
 
 const PASSWORD = 'correct-horse-battery'
 const EVENT_YEAR = new Date().getFullYear() + 1
@@ -15,7 +23,7 @@ const EVENT_DAY = (() => {
 const EUR_20 = /20,00\s€/
 
 test('an organizer runs an event from their phone', async ({ page, browser }, testInfo) => {
-  const run = `${Date.now().toString(36)}${testInfo.project.name}`
+  const run = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}${testInfo.project.name}`
   const organizer = { name: 'Maya Martin', email: `organizer-${run}@example.com` }
   const volunteer = { name: 'Val Bernard', email: `volunteer-${run}@example.com` }
   const buyer = { first: `Ana${run}`, name: `Ana${run} Lopez`, email: `ana-${run}@example.com` }
@@ -48,6 +56,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     await page.getByLabel('Date', { exact: true }).click()
     await page.getByRole('combobox', { name: /mois/i }).selectOption('10')
     await page.getByRole('combobox', { name: /année/i }).selectOption(String(EVENT_YEAR))
+    await expectCleanChrome(page)
     await page.getByRole('button', { name: new RegExp(`14 novembre ${EVENT_YEAR}`) }).click()
     await page.getByLabel('Heure').fill('18:30')
     await page.getByLabel('Lieu').fill('Salle des fêtes, 12 rue de la Paix')
@@ -64,6 +73,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     await expect(page).toHaveURL(/\/events\/[a-z0-9]+\/guests$/)
     eventUrl = page.url().replace(/\/guests$/, '')
     await expect(page.getByText('Pas encore d’invités')).toBeVisible()
+    await expectCleanChrome(page)
     await expect(page.getByText(`${EVENT_DAY} · 18:30`)).toBeVisible()
     for (const tab of ['Vendre', 'Invités', 'Check-in', 'Réglages']) {
       await expectTouchTarget(tabs.getByRole('link', { name: tab }))
@@ -153,7 +163,10 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     await page.getByRole('searchbox', { name: 'Rechercher un invité' }).fill(reference)
     await page.getByRole('link', { name: new RegExp(payer.name) }).click()
     await page.getByRole('button', { name: 'Enregistrer un paiement' }).click()
-    await page.getByRole('button', { name: /^Enregistrer 10,00\s€$/ }).click()
+    const record = page.getByRole('button', { name: /^Enregistrer 10,00\s€$/ })
+    await expect(record).toBeVisible()
+    await expectCleanChrome(page)
+    await record.click()
     await expect(page.getByText(`Payé ! Billets envoyés à ${payer.email}.`)).toBeVisible()
     await expect(page.getByRole('img', { name: /^QR code du billet/ })).toHaveCount(2)
     const tickets = await waitForEmail((text) => text.includes(`C’est confirmé, ${payer.first} !`))
@@ -207,6 +220,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
 
     await expect(volunteerPage).toHaveURL(/\/events$/)
     await expect(volunteerPage.getByText('Bénévole')).toBeVisible()
+    await expectCleanChrome(volunteerPage)
     await volunteerPage.getByRole('link', { name: new RegExp(eventName) }).click()
     await expect(volunteerPage).toHaveURL(/\/check-in$/)
     await expect(volunteerPage.getByRole('navigation', { name: 'Événement' })).toHaveCount(0)
@@ -220,6 +234,8 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
 
   await test.step('sign out from the account sheet', async () => {
     await page.getByRole('button', { name: 'Mon compte' }).click()
+    await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+    await expectCleanChrome(page)
     await page.getByRole('button', { name: 'Se déconnecter' }).click()
     await expect(page).toHaveURL(/\/login$/)
   })
@@ -230,4 +246,5 @@ test('signed-out visitors are sent to sign in', async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?redirect=/)
   await expect(page.getByRole('heading', { name: 'Bon retour' })).toBeVisible()
   await expectFitsScreen(page)
+  await expectCleanChrome(page)
 })

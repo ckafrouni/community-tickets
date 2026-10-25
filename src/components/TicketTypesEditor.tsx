@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
+import { useId } from 'react'
 import { Button } from '#/components/ui/button'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
@@ -42,6 +43,7 @@ export function TicketTypesEditor({
   currency: string
   onChange: (rows: TicketTypeRow[]) => void
 }) {
+  const fieldId = useId()
   const update = (key: string, patch: Partial<TicketTypeRow>) =>
     onChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)))
 
@@ -50,11 +52,11 @@ export function TicketTypesEditor({
       {rows.map((row, index) => (
         <div key={row.key} className="grid grid-cols-[1fr_7rem_auto] items-end gap-2">
           <Field>
-            <FieldLabel htmlFor={`type-name-${row.key}`} className={index > 0 ? 'sr-only' : undefined}>
+            <FieldLabel htmlFor={`${fieldId}-name-${index}`} className={index > 0 ? 'sr-only' : undefined}>
               Tarif
             </FieldLabel>
             <Input
-              id={`type-name-${row.key}`}
+              id={`${fieldId}-name-${index}`}
               required
               autoCapitalize="sentences"
               placeholder="Adulte, Étudiant, Enfant…"
@@ -63,7 +65,7 @@ export function TicketTypesEditor({
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor={`type-price-${row.key}`} className={index > 0 ? 'sr-only' : undefined}>
+            <FieldLabel htmlFor={`${fieldId}-price-${index}`} className={index > 0 ? 'sr-only' : undefined}>
               Prix
             </FieldLabel>
             <InputGroup>
@@ -71,7 +73,7 @@ export function TicketTypesEditor({
                 <InputGroupText>{currencySymbol(currency)}</InputGroupText>
               </InputGroupAddon>
               <InputGroupInput
-                id={`type-price-${row.key}`}
+                id={`${fieldId}-price-${index}`}
                 inputMode="decimal"
                 placeholder="0"
                 aria-label={`Prix ${row.name || 'du tarif'}`}
