@@ -39,14 +39,14 @@ export const Route = createFileRoute('/_app/events/$eventId/_organizer/guests/$o
     if (!Number.isInteger(id) || id <= 0) throw notFound()
     return getOrderFn({ data: { eventId: params.eventId, id } })
   },
-  head: ({ loaderData }) => ({ meta: [{ title: loaderData ? loaderData.buyerName : 'Guest' }] }),
+  head: ({ loaderData }) => ({ meta: [{ title: loaderData ? loaderData.buyerName : 'Invité' }] }),
   notFoundComponent: () => (
     <Empty className="border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Ban />
         </EmptyMedia>
-        <EmptyTitle>Guest not found</EmptyTitle>
+        <EmptyTitle>Invité introuvable</EmptyTitle>
       </EmptyHeader>
     </Empty>
   ),
@@ -82,8 +82,8 @@ function GuestPage() {
   function resend() {
     return run('email', async () => {
       const result = await resendEmailFn({ data: { eventId, id: order.id } })
-      if (result.status === 'failed') throw new Error(`Email failed: ${result.error}`)
-      return `Tickets emailed to ${order.buyerEmail}.`
+      if (result.status === 'failed') throw new Error(`Échec de l’e-mail : ${result.error}`)
+      return `Billets envoyés à ${order.buyerEmail}.`
     })
   }
 
@@ -94,7 +94,7 @@ function GuestPage() {
         params={{ eventId }}
         className={buttonVariants({ variant: 'ghost', size: 'sm', className: '-ml-2 mb-2 text-muted-foreground' })}
       >
-        <ChevronLeft data-icon="inline-start" /> Guests
+        <ChevronLeft data-icon="inline-start" /> Invités
       </Link>
 
       {created && <CreatedBanner order={order} eventId={eventId} />}
@@ -108,10 +108,10 @@ function GuestPage() {
           <p className="truncate text-[15px] text-muted-foreground">{order.buyerEmail || order.buyerPhone}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {cancelled ? (
-              <Badge variant="destructive">Cancelled</Badge>
+              <Badge variant="destructive">Annulée</Badge>
             ) : (
               <Badge variant={arrived === order.quantity ? 'success' : arrived ? 'warning' : 'secondary'}>
-                {arrived === order.quantity ? 'Arrived' : `${arrived}/${order.quantity} checked in`}
+                {arrived === order.quantity ? 'Arrivé' : `${arrived}/${order.quantity} arrivés`}
               </Badge>
             )}
             <EmailStatusBadge status={order.emailStatus} />
@@ -122,9 +122,9 @@ function GuestPage() {
       {cancelled && (
         <Alert variant="destructive" className="mb-5">
           <Ban />
-          <AlertTitle>This order is cancelled</AlertTitle>
+          <AlertTitle>Cette commande est annulée</AlertTitle>
           <AlertDescription>
-            Its tickets are refused at the door.{order.cancelReason && <> Reason: {order.cancelReason}</>}
+            Ses billets sont refusés à l’entrée.{order.cancelReason && <> Motif : {order.cancelReason}</>}
           </AlertDescription>
         </Alert>
       )}
@@ -132,13 +132,13 @@ function GuestPage() {
       {order.emailStatus === 'failed' && order.emailError && !created && (
         <Alert variant="destructive" className="mb-5">
           <TriangleAlert />
-          <AlertTitle>The last email failed</AlertTitle>
+          <AlertTitle>Le dernier e-mail a échoué</AlertTitle>
           <AlertDescription className="break-words">{order.emailError}</AlertDescription>
         </Alert>
       )}
 
       <section className="mb-6">
-        <SectionTitle>{plural(order.quantity, 'ticket')}</SectionTitle>
+        <SectionTitle>{plural(order.quantity, 'billet')}</SectionTitle>
         <div className="grid gap-3 sm:grid-cols-2">
           {order.tickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} eventId={eventId} orderCancelled={cancelled} />
@@ -147,16 +147,16 @@ function GuestPage() {
       </section>
 
       <section className="mb-6">
-        <SectionTitle>Payment</SectionTitle>
+        <SectionTitle>Paiement</SectionTitle>
         <Card size="sm">
           <CardContent>
             <dl className="divide-y">
-              <Row label="Paid in cash">{formatMoney(order.amount, order.currency)}</Row>
-              <Row label="Sold">
+              <Row label="Payé en espèces">{formatMoney(order.amount, order.currency)}</Row>
+              <Row label="Vendu le">
                 <LocalTime iso={order.createdAt} />
               </Row>
-              <Row label="Order">#{order.id}</Row>
-              {order.buyerPhone && <Row label="Phone">{order.buyerPhone}</Row>}
+              <Row label="Commande">n° {order.id}</Row>
+              {order.buyerPhone && <Row label="Téléphone">{order.buyerPhone}</Row>}
               {order.notes && <Row label="Notes">{order.notes}</Row>}
             </dl>
           </CardContent>
@@ -173,7 +173,7 @@ function GuestPage() {
           disabled={cancelled || busy !== null}
         >
           {busy === 'email' ? <Spinner /> : <Mail />}
-          {order.emailStatus === 'sent' ? 'Resend tickets' : 'Email tickets'}
+          {order.emailStatus === 'sent' ? 'Renvoyer les billets' : 'Envoyer les billets'}
         </Button>
         <EditGuestDrawer order={order} eventId={eventId} />
         <CancelOrder order={order} eventId={eventId} />
@@ -197,15 +197,15 @@ function CreatedBanner({ order, eventId }: { order: OrderDetail; eventId: string
     <div className="mb-5 flex flex-col gap-3">
       <Alert>
         {failed ? <TriangleAlert className="text-destructive" /> : <CircleCheck className="text-emerald-600" />}
-        <AlertTitle>Sale recorded: {formatMoney(order.amount, order.currency)} cash</AlertTitle>
+        <AlertTitle>Vente enregistrée : {formatMoney(order.amount, order.currency)} en espèces</AlertTitle>
         <AlertDescription className="break-words">
           {failed
-            ? `The email to ${order.buyerEmail} failed: ${order.emailError} Try again below.`
-            : `Tickets emailed to ${order.buyerEmail}.`}
+            ? `L’e-mail à ${order.buyerEmail} a échoué : ${order.emailError} Réessayez ci-dessous.`
+            : `Billets envoyés à ${order.buyerEmail}.`}
         </AlertDescription>
       </Alert>
       <Link to="/events/$eventId/sell" params={{ eventId }} className={buttonVariants({ size: 'lg' })}>
-        Sell another
+        Nouvelle vente
       </Link>
     </div>
   )
@@ -229,35 +229,35 @@ function TicketCard({
     <Card size="sm">
       <CardHeader>
         <CardTitle className="text-muted-foreground">
-          {ticket.seq} of {ticket.quantity}
+          {ticket.seq} sur {ticket.quantity}
         </CardTitle>
         <CardAction>
           {orderCancelled ? (
-            <Badge variant="destructive">Void</Badge>
+            <Badge variant="destructive">Annulé</Badge>
           ) : ticket.checkedInAt ? (
             <Badge variant="success">
-              In at&nbsp;
+              Arrivé à&nbsp;
               <LocalTime iso={ticket.checkedInAt} mode="time" />
             </Badge>
           ) : (
-            <Badge variant="secondary">Not checked in</Badge>
+            <Badge variant="secondary">Pas arrivé</Badge>
           )}
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-2">
         <Dialog>
           <DialogTrigger
-            aria-label="Show QR code full screen"
+            aria-label="Afficher le QR code en plein écran"
             className="block w-48 rounded-2xl p-1 ring-1 ring-foreground/10 transition hover:ring-foreground/30"
           >
-            <QrImage svg={ticket.qrSvg} label={`QR code for ticket ${code}`} />
+            <QrImage svg={ticket.qrSvg} label={`QR code du billet ${code}`} />
           </DialogTrigger>
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-            <DialogTitle className="sr-only">Ticket {code}</DialogTitle>
-            <QrImage svg={ticket.qrSvg} label={`QR code for ticket ${code}`} />
+            <DialogTitle className="sr-only">Billet {code}</DialogTitle>
+            <QrImage svg={ticket.qrSvg} label={`QR code du billet ${code}`} />
             <p className="text-center font-mono text-2xl font-semibold tracking-widest">{code}</p>
             <DialogDescription className="text-center">
-              Scan with your phone camera to save your ticket.
+              Scannez avec l’appareil photo de votre téléphone pour garder votre billet.
             </DialogDescription>
           </DialogContent>
         </Dialog>
@@ -267,16 +267,16 @@ function TicketCard({
         {canShare ? (
           <Button
             variant="secondary"
-            onClick={() => navigator.share({ title: 'Your ticket', url: ticket.url }).catch(() => {})}
+            onClick={() => navigator.share({ title: 'Votre billet', url: ticket.url }).catch(() => {})}
           >
-            <Share /> Share
+            <Share /> Partager
           </Button>
         ) : (
           <Button
             variant="secondary"
-            onClick={() => navigator.clipboard.writeText(ticket.url).then(() => toast.success('Ticket link copied.'))}
+            onClick={() => navigator.clipboard.writeText(ticket.url).then(() => toast.success('Lien du billet copié.'))}
           >
-            <Copy /> Copy link
+            <Copy /> Copier le lien
           </Button>
         )}
         {!orderCancelled &&
@@ -287,11 +287,11 @@ function TicketCard({
               onClick={() =>
                 run('undo', async () => {
                   await undoCheckInFn({ data: { eventId, ticketId: ticket.id } })
-                  return 'Check-in undone.'
+                  return 'Check-in annulé.'
                 })
               }
             >
-              <RotateCcw /> Undo
+              <RotateCcw /> Annuler
             </Button>
           ) : (
             <Button
@@ -299,11 +299,11 @@ function TicketCard({
               onClick={() =>
                 run('in', async () => {
                   await checkInTicketFn({ data: { eventId, ticketId: ticket.id } })
-                  return 'Checked in.'
+                  return 'Check-in fait.'
                 })
               }
             >
-              {busy === 'in' && <Spinner />} Check in
+              {busy === 'in' && <Spinner />} Check-in
             </Button>
           ))}
       </CardFooter>
@@ -336,7 +336,7 @@ function EditGuestDrawer({ order, eventId }: { order: OrderDetail; eventId: stri
       await updateOrderFn({ data: { eventId, id: order.id, ...form } })
       await router.invalidate()
       setOpen(false)
-      toast.success(emailChanged ? 'Saved. Resend the tickets to the new address.' : 'Saved.')
+      toast.success(emailChanged ? 'Enregistré. Renvoyez les billets à la nouvelle adresse.' : 'Enregistré.')
     } catch (err) {
       toast.error(errorMessage(err))
     } finally {
@@ -347,21 +347,21 @@ function EditGuestDrawer({ order, eventId }: { order: OrderDetail; eventId: stri
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger render={<Button variant="outline" size="lg" className="justify-start" />}>
-        <Pencil /> Edit details
+        <Pencil /> Modifier les infos
       </DrawerTrigger>
       <DrawerContent>
         <form onSubmit={save} className="flex min-h-0 flex-col">
           <DrawerHeader>
-            <DrawerTitle>Edit details</DrawerTitle>
+            <DrawerTitle>Modifier les infos</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto px-4">
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="edit-name">Name</FieldLabel>
+                <FieldLabel htmlFor="edit-name">Nom</FieldLabel>
                 <Input id="edit-name" required autoCapitalize="words" {...field('buyerName')} />
               </Field>
               <Field>
-                <FieldLabel htmlFor="edit-email">Email</FieldLabel>
+                <FieldLabel htmlFor="edit-email">E-mail</FieldLabel>
                 <Input
                   id="edit-email"
                   type="email"
@@ -370,10 +370,12 @@ function EditGuestDrawer({ order, eventId }: { order: OrderDetail; eventId: stri
                   autoCapitalize="none"
                   {...field('buyerEmail')}
                 />
-                {emailChanged && <FieldDescription>Remember to resend the tickets after saving.</FieldDescription>}
+                {emailChanged && (
+                  <FieldDescription>Pensez à renvoyer les billets après l’enregistrement.</FieldDescription>
+                )}
               </Field>
               <Field>
-                <FieldLabel htmlFor="edit-phone">Phone</FieldLabel>
+                <FieldLabel htmlFor="edit-phone">Téléphone</FieldLabel>
                 <Input id="edit-phone" type="tel" inputMode="tel" {...field('buyerPhone')} />
               </Field>
               <Field>
@@ -384,7 +386,7 @@ function EditGuestDrawer({ order, eventId }: { order: OrderDetail; eventId: stri
           </div>
           <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <Button type="submit" size="lg" disabled={pending}>
-              {pending && <Spinner />} Save
+              {pending && <Spinner />} Enregistrer
             </Button>
           </DrawerFooter>
         </form>
@@ -409,11 +411,11 @@ function CancelOrder({ order, eventId }: { order: OrderDetail; eventId: string }
         onClick={() =>
           run('reinstate', async () => {
             await setOrderCancelledFn({ data: { eventId, id: order.id, cancelled: false, reason: '' } })
-            return 'Order reinstated. Its tickets are valid again.'
+            return 'Commande rétablie. Ses billets sont de nouveau valables.'
           })
         }
       >
-        {busy === 'reinstate' ? <Spinner /> : <RotateCcw />} Reinstate order
+        {busy === 'reinstate' ? <Spinner /> : <RotateCcw />} Rétablir la commande
       </Button>
     )
   }
@@ -421,26 +423,26 @@ function CancelOrder({ order, eventId }: { order: OrderDetail; eventId: string }
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger render={<Button variant="destructive" size="lg" className="justify-start" />}>
-        <Ban /> Cancel &amp; refund
+        <Ban /> Annuler et rembourser
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancel {plural(order.quantity, 'ticket')}?</AlertDialogTitle>
+          <AlertDialogTitle>Annuler {plural(order.quantity, 'billet')} ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Every ticket in this order stops working at the door. Return the {total} cash yourself.
+            Tous les billets de cette commande seront refusés à l’entrée. Rendez vous-même les {total} en espèces.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Field>
-          <FieldLabel htmlFor="cancel-reason">Reason (optional)</FieldLabel>
+          <FieldLabel htmlFor="cancel-reason">Motif (facultatif)</FieldLabel>
           <Input
             id="cancel-reason"
-            placeholder="e.g. can't attend"
+            placeholder="ex. ne peut pas venir"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />
         </Field>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep it</AlertDialogCancel>
+          <AlertDialogCancel>Garder</AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={busy !== null}
@@ -448,11 +450,11 @@ function CancelOrder({ order, eventId }: { order: OrderDetail; eventId: string }
               run('cancel', async () => {
                 await setOrderCancelledFn({ data: { eventId, id: order.id, cancelled: true, reason } })
                 setOpen(false)
-                return `Order cancelled. Refund ${total} to ${order.buyerName}.`
+                return `Commande annulée. Remboursez ${total} à ${order.buyerName}.`
               })
             }
           >
-            {busy === 'cancel' && <Spinner />} Cancel order
+            {busy === 'cancel' && <Spinner />} Annuler la commande
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

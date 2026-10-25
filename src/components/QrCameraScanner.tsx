@@ -10,11 +10,11 @@ function cameraErrorMessage(error: unknown): string {
   const name = error instanceof DOMException ? error.name : ''
   const text = error instanceof Error ? error.message : String(error)
   if (name === 'NotAllowedError' || name === 'SecurityError') {
-    return 'Camera access was blocked. Allow camera access for this site in your browser settings, then try again.'
+    return 'L’accès à la caméra est bloqué. Autorisez la caméra pour ce site dans les réglages du navigateur, puis réessayez.'
   }
-  if (name === 'NotFoundError' || /camera not found/i.test(text)) return 'No camera was found on this device.'
-  if (name === 'NotReadableError') return 'The camera is being used by another app. Close it and try again.'
-  return `Could not start the camera: ${text}`
+  if (name === 'NotFoundError' || /camera not found/i.test(text)) return 'Aucune caméra trouvée sur cet appareil.'
+  if (name === 'NotReadableError') return 'La caméra est utilisée par une autre application. Fermez-la et réessayez.'
+  return `Impossible de démarrer la caméra : ${text}`
 }
 
 export function QrCameraScanner({
@@ -43,7 +43,9 @@ export function QrCameraScanner({
   async function start() {
     if (!window.isSecureContext) {
       setState('error')
-      setError('The camera only works on a secure (https://) address. Open the app using its https link.')
+      setError(
+        'La caméra ne fonctionne qu’avec une adresse sécurisée (https://). Ouvrez l’application avec son lien https.',
+      )
       return
     }
     setState('starting')
@@ -110,7 +112,7 @@ export function QrCameraScanner({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-neutral-300">
             <ScanLine className="size-10 text-neutral-500" strokeWidth={1.5} />
             <p className="max-w-60 text-[15px]">
-              {state === 'error' ? error : 'Point the camera at the QR code on the ticket.'}
+              {state === 'error' ? error : 'Pointez la caméra vers le QR code du billet.'}
             </p>
             <Button
               size="lg"
@@ -122,7 +124,7 @@ export function QrCameraScanner({
               disabled={state === 'starting'}
             >
               {state === 'starting' ? <Spinner /> : <Camera />}
-              {state === 'error' ? 'Try again' : 'Start scanning'}
+              {state === 'error' ? 'Réessayer' : 'Scanner'}
             </Button>
           </div>
         )}
@@ -130,7 +132,13 @@ export function QrCameraScanner({
       </div>
       {state === 'running' && (
         <div className="mt-3 flex justify-center gap-3">
-          <Button variant="secondary" size="icon" onClick={stop} aria-label="Stop camera" title="Stop camera">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={stop}
+            aria-label="Arrêter la caméra"
+            title="Arrêter la caméra"
+          >
             <CameraOff />
           </Button>
           {cameras.length > 1 && (
@@ -138,8 +146,8 @@ export function QrCameraScanner({
               variant="secondary"
               size="icon"
               onClick={() => void switchCamera()}
-              aria-label="Switch camera"
-              title="Switch camera"
+              aria-label="Changer de caméra"
+              title="Changer de caméra"
             >
               <SwitchCamera />
             </Button>
@@ -149,7 +157,7 @@ export function QrCameraScanner({
               variant={flashOn ? 'default' : 'secondary'}
               size="icon"
               onClick={() => void toggleFlash()}
-              aria-label={flashOn ? 'Turn flashlight off' : 'Turn flashlight on'}
+              aria-label={flashOn ? 'Éteindre la lampe' : 'Allumer la lampe'}
               aria-pressed={flashOn}
             >
               {flashOn ? <FlashlightOff /> : <Flashlight />}

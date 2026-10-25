@@ -1,4 +1,5 @@
-const LOCALE = 'en'
+export const LOCALE = 'fr-FR'
+export const TIME_ZONE = 'Europe/Paris'
 
 export function currencyDigits(currency: string): number {
   try {
@@ -41,7 +42,7 @@ export function currencySymbol(currency: string): string {
 
 export function minorToInput(minor: number, currency: string): string {
   const digits = currencyDigits(currency)
-  return (minor / 10 ** digits).toFixed(digits)
+  return (minor / 10 ** digits).toFixed(digits).replace('.', ',')
 }
 
 export function inputToMinor(input: string, currency: string): number | null {
@@ -64,8 +65,10 @@ export function normalizeCode(input: string): string {
 }
 
 export function plural(n: number, singular: string, pluralForm = `${singular}s`) {
-  return `${n} ${n === 1 ? singular : pluralForm}`
+  return `${n} ${Math.abs(n) < 2 ? singular : pluralForm}`
 }
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
 export type EventWhen = { month: string; day: string; date: string; time: string }
 
@@ -78,10 +81,10 @@ export function parseEventDate(value: string): EventWhen | null {
   const format = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(LOCALE, { timeZone: 'UTC', ...options }).format(date)
   return {
-    month: format({ month: 'short' }).toUpperCase(),
+    month: format({ month: 'short' }).replace('.', '').toUpperCase(),
     day: format({ day: 'numeric' }),
-    date: format({ weekday: 'long', month: 'long', day: 'numeric' }),
-    time: format({ hour: 'numeric', minute: '2-digit' }),
+    date: capitalize(format({ weekday: 'long', month: 'long', day: 'numeric' })),
+    time: format({ hour: '2-digit', minute: '2-digit' }),
   }
 }
 
@@ -91,22 +94,25 @@ export function describeEventDate(value: string): string {
 }
 
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
+  return new Date(iso).toLocaleString(LOCALE, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { timeStyle: 'short' })
+  return new Date(iso).toLocaleTimeString(LOCALE, { timeStyle: 'short' })
 }
+
+export function formatLongDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(LOCALE, { dateStyle: 'long', timeZone: TIME_ZONE })
+}
+
+const relative = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto', style: 'short' })
 
 export function timeAgo(iso: string, now = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000))
-  if (seconds < 60) return 'just now'
+  if (seconds < 60) return 'à l’instant'
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 60) return relative.format(-minutes, 'minute')
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${plural(hours, 'hour')} ago`
-  return `${plural(Math.round(hours / 24), 'day')} ago`
+  if (hours < 24) return relative.format(-hours, 'hour')
+  return relative.format(-Math.round(hours / 24), 'day')
 }

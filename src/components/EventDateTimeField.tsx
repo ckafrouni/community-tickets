@@ -1,4 +1,6 @@
 import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { fr as calendarFr } from 'react-day-picker/locale'
 import { ChevronDownIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/components/ui/button'
@@ -27,12 +29,13 @@ export function EventDateTimeField({ value, onChange }: { value: string; onChang
           <PopoverTrigger
             render={<Button variant="outline" id="event-date" className="w-full justify-between font-normal" />}
           >
-            {date ? format(date, 'EEE, MMM d, yyyy') : 'Select date'}
+            {date ? format(date, 'EEE d MMM yyyy', { locale: fr }) : 'Choisir une date'}
             <ChevronDownIcon data-icon="inline-end" />
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
             <Calendar
               mode="single"
+              locale={calendarFr}
               selected={date}
               captionLayout="dropdown"
               defaultMonth={date}
@@ -47,7 +50,7 @@ export function EventDateTimeField({ value, onChange }: { value: string; onChang
         </Popover>
       </Field>
       <Field className="w-32 shrink-0">
-        <FieldLabel htmlFor="event-time">Time</FieldLabel>
+        <FieldLabel htmlFor="event-time">Heure</FieldLabel>
         <Input
           type="time"
           id="event-time"

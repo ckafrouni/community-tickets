@@ -9,11 +9,11 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
-import { formText } from '#/lib/form'
+import { authErrorMessage, formText } from '#/lib/form'
 
 export const Route = createFileRoute('/forgot-password')({
   loader: () => getLoginStatusFn(),
-  head: () => ({ meta: [{ title: 'Reset your password · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Mot de passe oublié · Community Tickets' }] }),
   component: ForgotPasswordPage,
 })
 
@@ -30,32 +30,32 @@ function ForgotPasswordPage() {
     setError(undefined)
     const { error } = await authClient.requestPasswordReset({ email, redirectTo: '/reset-password' })
     setPending(false)
-    if (error) setError(error.message ?? 'Something went wrong. Please try again.')
+    if (error) setError(authErrorMessage(error, 'Une erreur est survenue. Réessayez.'))
     else setSentTo(email)
   }
 
   return (
     <AuthCard
-      title={sentTo ? 'Check your inbox' : 'Reset your password'}
-      subtitle={sentTo ? undefined : "We'll email you a link to choose a new one."}
+      title={sentTo ? 'Vérifiez votre boîte mail' : 'Mot de passe oublié'}
+      subtitle={sentTo ? undefined : 'Nous vous enverrons un lien pour en choisir un nouveau.'}
       footer={
         <p>
           <Link to="/login" className={authLinkClass}>
-            Back to sign in
+            Retour à la connexion
           </Link>
         </p>
       }
     >
       {sentTo ? (
         <p className="text-[15px] text-muted-foreground">
-          If {sentTo} has an account, it will get a link within a minute. The link works for 24 hours. Can't find it?
-          Check your spam folder.
+          Si {sentTo} a un compte, un lien arrivera d’ici une minute. Il est valable 24 heures. Introuvable ? Regardez
+          dans les spams.
         </p>
       ) : (
         <form method="post" onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="forgot-email">Email</FieldLabel>
+              <FieldLabel htmlFor="forgot-email">E-mail</FieldLabel>
               <Input
                 id="forgot-email"
                 type="email"
@@ -73,7 +73,7 @@ function ForgotPasswordPage() {
               </Alert>
             )}
             <Button type="submit" size="lg" disabled={!hydrated || pending}>
-              {pending && <Spinner />} Email me a link
+              {pending && <Spinner />} M’envoyer un lien
             </Button>
           </FieldGroup>
         </form>

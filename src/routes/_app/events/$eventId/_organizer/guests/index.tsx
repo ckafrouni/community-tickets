@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_app/events/$eventId/_organizer/guests/')
   }),
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
   loader: ({ deps, params }) => listOrdersFn({ data: { eventId: params.eventId, q: deps.q } }),
-  head: () => ({ meta: [{ title: 'Guests' }] }),
+  head: () => ({ meta: [{ title: 'Invités' }] }),
   component: GuestsPage,
 })
 
@@ -55,15 +55,15 @@ function GuestsPage() {
   return (
     <>
       <PageHeader
-        title="Guests"
-        description={`${plural(stats.orders, 'order')} · ${plural(stats.ticketsSold, 'ticket')}`}
+        title="Invités"
+        description={`${plural(stats.orders, 'commande')} · ${plural(stats.ticketsSold, 'billet')}`}
         actions={
           orders.length > 0 && (
             <a
               href={`/api/events/${eventId}/guests.csv`}
               className={buttonVariants({ variant: 'outline', size: 'icon' })}
-              aria-label="Export guest list (CSV)"
-              title="Export CSV"
+              aria-label="Exporter la liste des invités (CSV)"
+              title="Exporter en CSV"
             >
               <Download />
             </a>
@@ -73,13 +73,13 @@ function GuestsPage() {
 
       <Card size="sm" className="mb-4">
         <CardContent className="grid grid-cols-3 divide-x text-center">
-          <Stat label="Sold" value={String(stats.ticketsSold)} />
+          <Stat label="Vendus" value={String(stats.ticketsSold)} />
           <div className="px-2">
-            <p className="text-xs text-muted-foreground">Checked in</p>
+            <p className="text-xs text-muted-foreground">Arrivés</p>
             <p className="text-xl font-semibold tabular-nums">{stats.checkedIn}</p>
-            <Progress value={percent} aria-label="Checked in" className="mx-auto mt-1 w-14" />
+            <Progress value={percent} aria-label="Arrivés" className="mx-auto mt-1 w-14" />
           </div>
-          <Stat label="Cash" value={formatMoney(stats.revenue, currency)} />
+          <Stat label="Encaissé" value={formatMoney(stats.revenue, currency)} />
         </CardContent>
       </Card>
 
@@ -92,22 +92,22 @@ function GuestsPage() {
             <InputGroupInput
               type="search"
               autoComplete="off"
-              placeholder="Search guests or ticket code"
-              aria-label="Search guests"
+              placeholder="Rechercher un invité ou un code"
+              aria-label="Rechercher un invité"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </InputGroup>
           <ToggleGroup
-            aria-label="Filter guests"
+            aria-label="Filtrer les invités"
             variant="outline"
             spacing={0}
             value={[filter]}
             onValueChange={(value) => value[0] && setFilter(value[0] as Filter)}
           >
-            <ToggleGroupItem value="all">All</ToggleGroupItem>
-            <ToggleGroupItem value="waiting">Not arrived</ToggleGroupItem>
-            <ToggleGroupItem value="arrived">Arrived</ToggleGroupItem>
+            <ToggleGroupItem value="all">Tous</ToggleGroupItem>
+            <ToggleGroupItem value="waiting">Pas arrivés</ToggleGroupItem>
+            <ToggleGroupItem value="arrived">Arrivés</ToggleGroupItem>
           </ToggleGroup>
         </div>
       )}
@@ -119,18 +119,18 @@ function GuestsPage() {
               <EmptyMedia variant="icon">
                 <Users />
               </EmptyMedia>
-              <EmptyTitle>No guests yet</EmptyTitle>
-              <EmptyDescription>Everyone you sell a ticket to shows up here.</EmptyDescription>
+              <EmptyTitle>Pas encore d’invités</EmptyTitle>
+              <EmptyDescription>Chaque personne à qui vous vendez un billet apparaît ici.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Link to="/events/$eventId/sell" params={{ eventId }} className={buttonVariants()}>
-                Sell the first ticket
+                Vendre le premier billet
               </Link>
             </EmptyContent>
           </Empty>
         ) : shown.length === 0 ? (
           <p className="px-1 py-10 text-center text-sm text-muted-foreground">
-            {q ? <>No guests match “{q}”.</> : 'Nobody here yet.'}
+            {q ? <>Aucun invité ne correspond à « {q} ».</> : 'Personne pour l’instant.'}
           </p>
         ) : (
           <ItemGroup className="gap-2">
@@ -171,19 +171,19 @@ function GuestItem({ order, eventId }: { order: OrderSummary; eventId: string })
         </ItemTitle>
         <ItemDescription className="flex items-center gap-1">
           {order.emailStatus === 'failed' && (
-            <MailX className="size-3.5 shrink-0 text-destructive" aria-label="Email failed" />
+            <MailX className="size-3.5 shrink-0 text-destructive" aria-label="Échec de l’e-mail" />
           )}
-          {plural(order.quantity, 'ticket')} · {formatMoney(order.amount, order.currency)}
+          {plural(order.quantity, 'billet')} · {formatMoney(order.amount, order.currency)}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
         {cancelled ? (
-          <Badge variant="destructive">Cancelled</Badge>
+          <Badge variant="destructive">Annulée</Badge>
         ) : order.checkedIn === order.quantity ? (
-          <Badge variant="success">Arrived</Badge>
+          <Badge variant="success">Arrivé</Badge>
         ) : order.checkedIn > 0 ? (
           <Badge variant="warning">
-            {order.checkedIn}/{order.quantity} in
+            {order.checkedIn}/{order.quantity} arrivés
           </Badge>
         ) : null}
         <ChevronRight className="size-4 text-muted-foreground" />

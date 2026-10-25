@@ -62,7 +62,7 @@ export const updateOrderFn = createServerFn({ method: 'POST' })
   .validator(buyerSchema.extend(orderRef.shape))
   .handler(async ({ data: { eventId, id, ...buyer }, context }) => {
     await requireEventAccess(context.user, eventId, 'organizer')
-    if (!(await getOrder(eventId, id))) throw new Error('Order not found')
+    if (!(await getOrder(eventId, id))) throw new Error('Commande introuvable')
     await updateOrderBuyer(eventId, id, buyer)
     return { ok: true }
   })
@@ -80,7 +80,7 @@ export const setOrderCancelledFn = createServerFn({ method: 'POST' })
   .validator(orderRef.extend({ cancelled: z.boolean(), reason: z.string().trim().max(300) }))
   .handler(async ({ data, context }) => {
     await requireEventAccess(context.user, data.eventId, 'organizer')
-    if (!(await getOrder(data.eventId, data.id))) throw new Error('Order not found')
+    if (!(await getOrder(data.eventId, data.id))) throw new Error('Commande introuvable')
     await setOrderCancelled(data.eventId, data.id, data.cancelled, data.reason)
     return { ok: true }
   })

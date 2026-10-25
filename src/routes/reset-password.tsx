@@ -8,7 +8,7 @@ import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { authClient } from '#/lib/auth-client'
-import { formText } from '#/lib/form'
+import { authErrorMessage, formText } from '#/lib/form'
 
 const MIN_LENGTH = 10
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/reset-password')({
     token: typeof search.token === 'string' ? search.token : undefined,
     error: typeof search.error === 'string' ? search.error : undefined,
   }),
-  head: () => ({ meta: [{ title: 'Choose a password · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Choisir un mot de passe · Community Tickets' }] }),
   component: ResetPasswordPage,
 })
 
@@ -31,18 +31,20 @@ function ResetPasswordPage() {
   if (!token || linkError) {
     return (
       <AuthCard
-        title="This link has expired"
+        title="Ce lien a expiré"
         footer={
           <p>
             <Link to="/forgot-password" className={authLinkClass}>
-              Send me a new link
+              M’envoyer un nouveau lien
             </Link>
           </p>
         }
       >
         <Alert variant="destructive">
           <TriangleAlert />
-          <AlertDescription>The link is invalid or older than 24 hours. Request a new one.</AlertDescription>
+          <AlertDescription>
+            Le lien est invalide ou date de plus de 24 heures. Demandez-en un nouveau.
+          </AlertDescription>
         </Alert>
       </AuthCard>
     )
@@ -53,14 +55,14 @@ function ResetPasswordPage() {
     const form = new FormData(event.currentTarget)
     const password = formText(form, 'password')
     if (password !== formText(form, 'confirm')) {
-      setError("The passwords don't match.")
+      setError('Les mots de passe ne correspondent pas.')
       return
     }
     setPending(true)
     setError(undefined)
     const { error } = await authClient.resetPassword({ newPassword: password, token })
     if (error) {
-      setError(error.message ?? 'Could not set the password. The link may have expired.')
+      setError(authErrorMessage(error, 'Impossible d’enregistrer le mot de passe. Le lien a peut-être expiré.'))
       setPending(false)
       return
     }
@@ -68,11 +70,11 @@ function ResetPasswordPage() {
   }
 
   return (
-    <AuthCard title="Choose a password" subtitle={`At least ${MIN_LENGTH} characters.`}>
+    <AuthCard title="Choisir un mot de passe" subtitle={`Au moins ${MIN_LENGTH} caractères.`}>
       <form method="post" onSubmit={onSubmit}>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="new-password">New password</FieldLabel>
+            <FieldLabel htmlFor="new-password">Nouveau mot de passe</FieldLabel>
             <Input
               id="new-password"
               type="password"
@@ -83,7 +85,7 @@ function ResetPasswordPage() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="confirm-password">Confirm password</FieldLabel>
+            <FieldLabel htmlFor="confirm-password">Confirmer le mot de passe</FieldLabel>
             <Input
               id="confirm-password"
               type="password"
@@ -100,7 +102,7 @@ function ResetPasswordPage() {
             </Alert>
           )}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
-            {pending && <Spinner />} Save password
+            {pending && <Spinner />} Enregistrer
           </Button>
         </FieldGroup>
       </form>

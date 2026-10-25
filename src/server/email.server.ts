@@ -24,11 +24,11 @@ function describeError(error: unknown): string {
 
 function greet(name: string) {
   const first = name.trim().split(/\s+/)[0]
-  return first ? `Hi ${first},` : 'Hi,'
+  return first ? `Bonjour ${first},` : 'Bonjour,'
 }
 
 export function roleLabel(role: EventRole) {
-  return role === 'organizer' ? 'an organizer' : 'a volunteer'
+  return role === 'organizer' ? 'organisateur' : 'bénévole'
 }
 
 export async function sendTicketEmail(
@@ -37,11 +37,11 @@ export async function sendTicketEmail(
   baseUrl: string,
 ): Promise<{ status: EmailStatus; error?: string }> {
   const [event, order] = await Promise.all([getEvent(eventId), getOrder(eventId, orderId)])
-  if (!event || !order) throw new Error('Order not found')
-  if (order.cancelledAt) throw new Error('This order is cancelled')
+  if (!event || !order) throw new Error('Commande introuvable')
+  if (order.cancelledAt) throw new Error('Cette commande est annulée')
   if (!order.buyerEmail) {
-    await setEmailStatus(orderId, 'not_sent', 'No email address')
-    return { status: 'not_sent', error: 'No email address' }
+    await setEmailStatus(orderId, 'not_sent', 'Pas d’adresse e-mail')
+    return { status: 'not_sent', error: 'Pas d’adresse e-mail' }
   }
 
   const tickets: (EmailTicket & { png: Uint8Array })[] = await Promise.all(
@@ -62,7 +62,7 @@ export async function sendTicketEmail(
       text,
       attachments: tickets.map((t) => ({
         content: bytesToBase64(t.png),
-        filename: `ticket-${t.seq}-${t.code}.png`,
+        filename: `billet-${t.seq}-${t.code}.png`,
         type: 'image/png',
         disposition: 'inline' as const,
         contentId: t.cid,
@@ -83,8 +83,8 @@ export async function sendTestEmail(event: EventDetails, to: string): Promise<vo
     from: { email: env.EMAIL_FROM, name: event.name },
     to,
     replyTo: event.contactEmail || undefined,
-    subject: `Test email for ${event.name}`,
-    text: `Email delivery works. Buyers of ${event.name} will receive their tickets from this address.`,
+    subject: `E-mail de test pour ${event.name}`,
+    text: `L’envoi d’e-mails fonctionne. Les acheteurs de ${event.name} recevront leurs billets depuis cette adresse.`,
   })
 }
 
@@ -105,13 +105,15 @@ type AuthEmail = { user: { id: string; email: string; name: string }; url: strin
 export function sendVerificationEmail({ user, url }: AuthEmail) {
   return sendAppEmail(
     user,
-    `Confirm your email for ${APP_NAME}`,
+    `Confirmez votre e-mail pour ${APP_NAME}`,
     renderActionEmail({
-      title: 'Confirm your email',
+      title: 'Confirmez votre e-mail',
       greeting: greet(user.name),
-      lines: [`Confirm that ${user.email} is your email address to finish creating your ${APP_NAME} account.`],
-      action: { label: 'Confirm email', url },
-      note: "The link expires in 24 hours. If you didn't create an account, you can ignore this email.",
+      lines: [
+        `Confirmez que ${user.email} est bien votre adresse pour terminer la création de votre compte ${APP_NAME}.`,
+      ],
+      action: { label: 'Confirmer mon e-mail', url },
+      note: 'Le lien expire dans 24 heures. Si vous n’avez pas créé de compte, ignorez cet e-mail.',
     }),
   )
 }
@@ -132,29 +134,29 @@ export async function sendPasswordEmail({ user, url }: AuthEmail) {
   if (event && role) {
     return sendAppEmail(
       user,
-      `You're invited to help run ${event.name}`,
+      `Invitation : rejoignez l’équipe de ${event.name}`,
       renderActionEmail({
-        title: `Join the team for ${event.name}`,
+        title: `Rejoignez l’équipe de ${event.name}`,
         greeting: greet(user.name),
         lines: [
-          `You've been added as ${roleLabel(role)} for ${event.name} on ${APP_NAME}.`,
-          `Choose a password to sign in as ${user.email}. The app works on your phone at the event.`,
+          `Vous rejoignez l’équipe de ${event.name} en tant que ${roleLabel(role)} sur ${APP_NAME}.`,
+          `Choisissez un mot de passe pour vous connecter avec ${user.email}. L’application fonctionne sur votre téléphone pendant l’événement.`,
         ],
-        action: { label: 'Choose a password', url },
-        note: "The link expires in 24 hours. If you weren't expecting this, you can ignore this email.",
+        action: { label: 'Choisir un mot de passe', url },
+        note: 'Le lien expire dans 24 heures. Si vous ne vous attendiez pas à cet e-mail, ignorez-le.',
       }),
     )
   }
 
   return sendAppEmail(
     user,
-    `Reset your ${APP_NAME} password`,
+    `Réinitialisez votre mot de passe ${APP_NAME}`,
     renderActionEmail({
-      title: 'Reset your password',
+      title: 'Réinitialisez votre mot de passe',
       greeting: greet(user.name),
-      lines: [`Use the button below to choose a new password for ${user.email}.`],
-      action: { label: 'Choose a new password', url },
-      note: "The link expires in 24 hours. If you didn't ask for this, you can ignore this email.",
+      lines: [`Utilisez le bouton ci-dessous pour choisir un nouveau mot de passe pour ${user.email}.`],
+      action: { label: 'Choisir un nouveau mot de passe', url },
+      note: 'Le lien expire dans 24 heures. Si vous n’avez rien demandé, ignorez cet e-mail.',
     }),
   )
 }
@@ -172,13 +174,15 @@ export function sendAddedToEventEmail({
 }) {
   return sendAppEmail(
     to,
-    `You've been added to ${event.name}`,
+    `Vous rejoignez l’équipe de ${event.name}`,
     renderActionEmail({
-      title: `You're on the team for ${event.name}`,
+      title: `Vous faites partie de l’équipe de ${event.name}`,
       greeting: greet(to.name),
-      lines: [`You've been added as ${roleLabel(role)} for ${event.name}. It now shows up in your events.`],
-      action: { label: 'Open event', url },
-      note: `You received this because someone added ${to.email} to an event on ${APP_NAME}.`,
+      lines: [
+        `Vous rejoignez l’équipe de ${event.name} en tant que ${roleLabel(role)}. L’événement apparaît maintenant dans vos événements.`,
+      ],
+      action: { label: 'Ouvrir l’événement', url },
+      note: `Vous recevez cet e-mail car quelqu’un a ajouté ${to.email} à un événement sur ${APP_NAME}.`,
     }),
   )
 }

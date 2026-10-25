@@ -25,7 +25,7 @@ export const Route = createFileRoute('/login')({
     const { signedIn } = await getLoginStatusFn()
     if (signedIn) throw redirect({ href: deps.redirect ?? '/events' })
   },
-  head: () => ({ meta: [{ title: 'Sign in · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Connexion · Community Tickets' }] }),
   component: LoginPage,
 })
 
@@ -49,10 +49,10 @@ function LoginPage() {
     if (error) {
       setError(
         error.status === 403
-          ? 'Confirm your email first. We just sent you a new link.'
+          ? 'Confirmez d’abord votre e-mail. Nous venons de vous renvoyer un lien.'
           : error.status === 429
-            ? (error.message ?? 'Too many attempts. Please wait a minute.')
-            : 'Incorrect email or password.',
+            ? (error.message ?? 'Trop de tentatives. Patientez une minute.')
+            : 'E-mail ou mot de passe incorrect.',
       )
       setPending(false)
       return
@@ -63,13 +63,13 @@ function LoginPage() {
 
   return (
     <AuthCard
-      title="Welcome back"
-      subtitle="Sign in to manage your events."
+      title="Bon retour"
+      subtitle="Connectez-vous pour gérer vos événements."
       footer={
         <p>
-          New here?{' '}
+          Pas encore de compte ?{' '}
           <Link to="/signup" className={authLinkClass}>
-            Create an account
+            Créer un compte
           </Link>
         </p>
       }
@@ -79,11 +79,11 @@ function LoginPage() {
           {search.passwordSet && (
             <Alert>
               <CircleCheck className="text-emerald-600" />
-              <AlertDescription>Your password is set. Sign in with it below.</AlertDescription>
+              <AlertDescription>Votre mot de passe est enregistré. Connectez-vous ci-dessous.</AlertDescription>
             </Alert>
           )}
           <Field>
-            <FieldLabel htmlFor="login-email">Email</FieldLabel>
+            <FieldLabel htmlFor="login-email">E-mail</FieldLabel>
             <Input
               id="login-email"
               type="email"
@@ -95,7 +95,7 @@ function LoginPage() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="login-password">Password</FieldLabel>
+            <FieldLabel htmlFor="login-password">Mot de passe</FieldLabel>
             <Input id="login-password" type="password" name="password" autoComplete="current-password" required />
           </Field>
           {error && (
@@ -105,10 +105,10 @@ function LoginPage() {
             </Alert>
           )}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
-            {pending && <Spinner />} Sign in
+            {pending && <Spinner />} Se connecter
           </Button>
           <Link to="/forgot-password" className="text-center text-sm text-muted-foreground hover:text-foreground">
-            Forgot your password?
+            Mot de passe oublié ?
           </Link>
         </FieldGroup>
       </form>

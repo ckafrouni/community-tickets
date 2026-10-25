@@ -16,11 +16,11 @@ export async function requireEventAccess(user: SessionUser, eventId: string, nee
   const access = await getEventAccess(user, eventId)
   if (!access) {
     setResponseStatus(404)
-    throw new Error('Event not found.')
+    throw new Error('Événement introuvable.')
   }
   if (need === 'organizer' && access.role !== 'organizer') {
     setResponseStatus(403)
-    throw new Error('Only organizers can do this.')
+    throw new Error('Seuls les organisateurs peuvent faire cela.')
   }
   return access
 }

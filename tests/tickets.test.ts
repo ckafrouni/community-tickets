@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { formatMoney, inputToMinor, normalizeCode, parseEventDate } from '#/lib/format'
+import { formatMoney, inputToMinor, normalizeCode, parseEventDate, plural } from '#/lib/format'
 import { NEW_EVENT, type SaleInput } from '#/lib/schemas'
 import { extractToken } from '#/lib/token'
 import { randomCode, randomTicketId, signTicket, verifyTicketToken } from '#/server/crypto.server'
@@ -74,15 +74,18 @@ describe('formatting helpers', () => {
     expect(inputToMinor('12,5', 'EUR')).toBe(1250)
     expect(inputToMinor('500', 'JPY')).toBe(500)
     expect(inputToMinor('abc', 'USD')).toBeNull()
-    expect(formatMoney(1250, 'USD')).toBe('$12.50')
+    expect(formatMoney(1250, 'EUR').replace(/\s/g, ' ')).toBe('12,50 €')
+    expect(plural(1, 'billet')).toBe('1 billet')
+    expect(plural(0, 'billet')).toBe('0 billet')
+    expect(plural(2, 'billet')).toBe('2 billets')
   })
 
   it('reads event dates from the date-time picker', () => {
     expect(parseEventDate('2026-11-14T18:00')).toEqual({
       month: 'NOV',
       day: '14',
-      date: 'Saturday, November 14',
-      time: '6:00 PM',
+      date: 'Samedi 14 novembre',
+      time: '18:00',
     })
     expect(parseEventDate('2026-02-30T10:00')).toBeNull()
     expect(parseEventDate('next friday')).toBeNull()
@@ -201,7 +204,7 @@ describe('orders and check-in (D1)', () => {
     const [ticket] = await repo.getOrderTickets(await repo.createOrder(a.eventId, sale, 'USD'))
     expect(await repo.checkInTicket(b.eventId, ticket.id, 'Door')).toEqual({
       status: 'invalid',
-      reason: 'This ticket is for a different event.',
+      reason: 'Ce billet est pour un autre événement.',
     })
     expect((await repo.getTicket(ticket.id))?.checkedInAt).toBeNull()
     await repo.checkInTicket(a.eventId, ticket.id, 'Door')
@@ -280,7 +283,8 @@ describe('ticket email', () => {
       cid: `ticket-${t.code}`,
     }))
     const { html, text } = renderTicketEmail({ ...event, venue: 'Town <Hall>' }, order, tickets)
-    expect(text).toContain('Saturday, November 14 · 6:00 PM')
+    expect(text).toContain('Samedi 14 novembre · 18:00')
+    expect(html).toContain('Vos 2 billets pour Harvest Supper')
     expect(html).toContain('Town &lt;Hall&gt;')
     expect(html.match(/cid:ticket-/g)).toHaveLength(2)
   })

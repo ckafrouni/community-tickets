@@ -17,7 +17,7 @@ export const Route = createFileRoute('/t/$token')({
   loader: ({ params }) => getPublicTicketFn({ data: { token: params.token } }),
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData?.valid ? `Your ticket · ${loaderData.event.name}` : 'Ticket not found' },
+      { title: loaderData?.valid ? `Votre billet · ${loaderData.event.name}` : 'Billet introuvable' },
       { name: 'robots', content: 'noindex, nofollow' },
     ],
   }),
@@ -35,8 +35,10 @@ function TicketPage() {
             <EmptyMedia variant="icon">
               <TicketX />
             </EmptyMedia>
-            <EmptyTitle>Ticket not found</EmptyTitle>
-            <EmptyDescription>This link isn't a valid ticket. Open the complete link from your email.</EmptyDescription>
+            <EmptyTitle>Billet introuvable</EmptyTitle>
+            <EmptyDescription>
+              Ce lien n’est pas un billet valide. Ouvrez le lien complet depuis votre e-mail.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       </div>
@@ -76,33 +78,34 @@ function TicketPage() {
       <Card className="mt-6 print:shadow-none">
         <CardContent className="flex flex-col items-center gap-3 text-center">
           {ticket.cancelled ? (
-            <Badge variant="destructive">Cancelled</Badge>
+            <Badge variant="destructive">Annulé</Badge>
           ) : ticket.checkedInAt ? (
-            <Badge variant="secondary">Checked in</Badge>
+            <Badge variant="secondary">Check-in fait</Badge>
           ) : (
             <Badge variant="success">
-              <Check /> You're in
+              <Check /> Billet valable
             </Badge>
           )}
           <div className={ticket.cancelled ? 'w-full opacity-20' : 'w-full'}>
-            <QrImage svg={qrSvg} label={`Ticket QR code ${code}`} className="mx-auto max-w-64" />
+            <QrImage svg={qrSvg} label={`QR code du billet ${code}`} className="mx-auto max-w-64" />
           </div>
           <p className="font-mono text-xl font-semibold tracking-widest">{code}</p>
           <div className="w-full border-t border-dashed pt-4">
             <p className="text-lg font-semibold break-words">{ticket.buyerName}</p>
             <p className="text-sm text-muted-foreground">
-              {ticket.quantity > 1 ? `Ticket ${ticket.seq} of ${ticket.quantity} · ` : ''}Order #{ticket.orderId} · Paid
+              {ticket.quantity > 1 ? `Billet ${ticket.seq} sur ${ticket.quantity} · ` : ''}Commande n° {ticket.orderId}{' '}
+              · Payé
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
             {ticket.cancelled ? (
-              'This ticket has been cancelled.'
+              'Ce billet a été annulé.'
             ) : ticket.checkedInAt ? (
               <>
-                Scanned at the entrance <LocalTime iso={ticket.checkedInAt} mode="ago" />.
+                Scanné à l’entrée <LocalTime iso={ticket.checkedInAt} mode="ago" />.
               </>
             ) : (
-              'Show this code at the entrance. It can be scanned once.'
+              'Présentez ce code à l’entrée. Il ne peut être scanné qu’une fois.'
             )}
           </p>
         </CardContent>
@@ -120,7 +123,7 @@ function TicketPage() {
       )}
 
       <p className="mt-6 text-center text-sm text-muted-foreground print:hidden">
-        Tip: take a screenshot so you have your ticket at the door.
+        Astuce : faites une capture d’écran pour avoir votre billet à l’entrée.
       </p>
     </div>
   )
@@ -156,12 +159,12 @@ function StaffPanel({
   }
 
   return (
-    <section aria-label="Staff controls" className="mt-6 print:hidden">
+    <section aria-label="Espace équipe" className="mt-6 print:hidden">
       <Card className="bg-primary text-primary-foreground">
         <CardContent className="flex flex-col gap-3">
-          <p className="text-xs font-medium tracking-wide uppercase opacity-70">Staff</p>
+          <p className="text-xs font-medium tracking-wide uppercase opacity-70">Équipe</p>
           {cancelled ? (
-            <p className="text-sm">Cancelled order: do not admit.</p>
+            <p className="text-sm">Commande annulée : ne pas faire entrer.</p>
           ) : checkedIn ? (
             <Button
               variant="secondary"
@@ -170,11 +173,11 @@ function StaffPanel({
               onClick={() =>
                 run(async () => {
                   await undoCheckInFn({ data: { eventId, ticketId } })
-                  return { ok: true, text: 'Check-in undone.' }
+                  return { ok: true, text: 'Check-in annulé.' }
                 })
               }
             >
-              {busy && <Spinner />} Undo check-in
+              {busy && <Spinner />} Annuler le check-in
             </Button>
           ) : (
             <Button
@@ -184,13 +187,13 @@ function StaffPanel({
               onClick={() =>
                 run(async () => {
                   const result = await scanTicketFn({ data: { eventId, token } })
-                  if (result.status === 'checked_in') return { ok: true, text: 'Checked in. Welcome!' }
-                  if (result.status === 'already_checked_in') return { ok: false, text: 'Already checked in.' }
-                  return { ok: false, text: 'This ticket is not valid.' }
+                  if (result.status === 'checked_in') return { ok: true, text: 'Check-in fait. Bienvenue !' }
+                  if (result.status === 'already_checked_in') return { ok: false, text: 'Check-in déjà fait.' }
+                  return { ok: false, text: 'Ce billet n’est pas valable.' }
                 })
               }
             >
-              {busy && <Spinner />} Check in now
+              {busy && <Spinner />} Faire le check-in
             </Button>
           )}
         </CardContent>

@@ -17,7 +17,7 @@ import { currencySymbol, formatMoney, inputToMinor, minorToInput, plural } from 
 import { errorMessage } from '#/lib/schemas'
 
 export const Route = createFileRoute('/_app/events/$eventId/_organizer/sell')({
-  head: () => ({ meta: [{ title: 'Sell tickets' }] }),
+  head: () => ({ meta: [{ title: 'Vendre des billets' }] }),
   component: SellPage,
 })
 
@@ -63,16 +63,19 @@ function SellPage() {
 
   return (
     <>
-      <PageHeader title="Sell tickets" description="Take the cash. The tickets are emailed to the buyer." />
+      <PageHeader
+        title="Vendre des billets"
+        description="Encaissez, puis les billets partent par e-mail à l’acheteur."
+      />
 
       {!event.startsAt && (
         <Alert className="mb-5">
           <Info />
-          <AlertTitle>Add the date and place</AlertTitle>
+          <AlertTitle>Ajoutez la date et le lieu</AlertTitle>
           <AlertDescription>
-            Guests see them on their tickets.{' '}
+            Les invités les voient sur leurs billets.{' '}
             <Link to="/events/$eventId/settings" params={{ eventId: event.id }} className="font-medium underline">
-              Edit event
+              Modifier l’événement
             </Link>
           </AlertDescription>
         </Alert>
@@ -80,25 +83,25 @@ function SellPage() {
 
       <Form onSubmit={onSubmit} className="gap-5">
         <section>
-          <SectionTitle>Buyer</SectionTitle>
+          <SectionTitle>Acheteur</SectionTitle>
           <Card>
             <CardContent>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="buyer-name">Name</FieldLabel>
+                  <FieldLabel htmlFor="buyer-name">Nom</FieldLabel>
                   <Input
                     id="buyer-name"
                     required
                     autoComplete="off"
                     autoCapitalize="words"
                     enterKeyHint="next"
-                    placeholder="Jane Doe"
+                    placeholder="Marie Dupont"
                     value={buyer.buyerName}
                     onChange={update('buyerName')}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="buyer-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="buyer-email">E-mail</FieldLabel>
                   <Input
                     id="buyer-email"
                     type="email"
@@ -107,14 +110,14 @@ function SellPage() {
                     autoComplete="off"
                     autoCapitalize="none"
                     enterKeyHint="next"
-                    placeholder="jane@example.com"
+                    placeholder="marie@exemple.fr"
                     value={buyer.buyerEmail}
                     onChange={update('buyerEmail')}
                   />
-                  <FieldDescription>Their QR tickets are sent here.</FieldDescription>
+                  <FieldDescription>Les billets avec QR code sont envoyés ici.</FieldDescription>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="buyer-phone">Phone (optional)</FieldLabel>
+                  <FieldLabel htmlFor="buyer-phone">Téléphone (facultatif)</FieldLabel>
                   <Input
                     id="buyer-phone"
                     type="tel"
@@ -130,20 +133,20 @@ function SellPage() {
         </section>
 
         <section>
-          <SectionTitle>Tickets</SectionTitle>
+          <SectionTitle>Billets</SectionTitle>
           <Card>
             <CardContent>
               <FieldGroup>
                 <Field orientation="horizontal">
                   <FieldContent>
-                    <FieldLabel htmlFor="ticket-quantity">Quantity</FieldLabel>
-                    <FieldDescription>{formatMoney(event.ticketPrice, event.currency)} each</FieldDescription>
+                    <FieldLabel htmlFor="ticket-quantity">Quantité</FieldLabel>
+                    <FieldDescription>{formatMoney(event.ticketPrice, event.currency)} l’unité</FieldDescription>
                   </FieldContent>
                   <ButtonGroup>
                     <Button
                       variant="outline"
                       size="icon"
-                      aria-label="One fewer ticket"
+                      aria-label="Un billet de moins"
                       disabled={quantity <= 1}
                       onClick={() => changeQuantity(quantity - 1)}
                     >
@@ -162,7 +165,7 @@ function SellPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      aria-label="One more ticket"
+                      aria-label="Un billet de plus"
                       disabled={quantity >= 50}
                       onClick={() => changeQuantity(quantity + 1)}
                     >
@@ -171,7 +174,7 @@ function SellPage() {
                   </ButtonGroup>
                 </Field>
                 <Field data-invalid={amount === null || undefined}>
-                  <FieldLabel htmlFor="cash-received">Cash received</FieldLabel>
+                  <FieldLabel htmlFor="cash-received">Espèces reçues</FieldLabel>
                   <InputGroup>
                     <InputGroupAddon>
                       <InputGroupText>{currencySymbol(event.currency)}</InputGroupText>
@@ -186,24 +189,24 @@ function SellPage() {
                     />
                   </InputGroup>
                   {amount === null ? (
-                    <FieldError>Enter a number, e.g. 20 or 12.50</FieldError>
+                    <FieldError>Saisissez un nombre, par exemple 20 ou 12,50</FieldError>
                   ) : (
                     amountInput !== null &&
                     amount !== suggested && (
                       <FieldDescription>
                         <button type="button" className="underline" onClick={() => setAmountInput(null)}>
-                          Reset to {formatMoney(suggested, event.currency)}
+                          Revenir à {formatMoney(suggested, event.currency)}
                         </button>
                       </FieldDescription>
                     )
                   )}
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="sale-notes">Notes (optional)</FieldLabel>
+                  <FieldLabel htmlFor="sale-notes">Notes (facultatif)</FieldLabel>
                   <Textarea
                     id="sale-notes"
                     rows={2}
-                    placeholder="e.g. paid for her parents too"
+                    placeholder="ex. a aussi payé pour ses parents"
                     value={buyer.notes}
                     onChange={update('notes')}
                   />
@@ -217,8 +220,8 @@ function SellPage() {
           <Button type="submit" size="lg" className="w-full" disabled={pending || amount === null}>
             {pending && <Spinner />}
             {amount === null
-              ? 'Enter the cash received'
-              : `Confirm ${formatMoney(amount, event.currency)} · ${plural(quantity, 'ticket')}`}
+              ? 'Saisissez le montant reçu'
+              : `Valider ${formatMoney(amount, event.currency)} · ${plural(quantity, 'billet')}`}
           </Button>
         </StickyBar>
       </Form>

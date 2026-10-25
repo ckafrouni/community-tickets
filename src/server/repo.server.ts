@@ -326,8 +326,8 @@ export async function checkInTicket(eventId: string, ticketId: string, by: strin
     .where(and(eq(tickets.id, ticketId), isNull(tickets.checkedInAt), exists(activeOrderOf(tickets.orderId, eventId))))
     .returning({ id: tickets.id })
   const ticket = await getTicket(ticketId)
-  if (!ticket) return { status: 'invalid', reason: 'This ticket does not exist.' }
-  if (ticket.eventId !== eventId) return { status: 'invalid', reason: 'This ticket is for a different event.' }
+  if (!ticket) return { status: 'invalid', reason: 'Ce billet n’existe pas.' }
+  if (ticket.eventId !== eventId) return { status: 'invalid', reason: 'Ce billet est pour un autre événement.' }
   if (updated.length === 1) return { status: 'checked_in', ticket }
   if (ticket.cancelled) return { status: 'cancelled', ticket }
   return { status: 'already_checked_in', ticket }

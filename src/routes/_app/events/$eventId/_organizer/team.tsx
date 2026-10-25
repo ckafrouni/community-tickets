@@ -28,7 +28,7 @@ import type { EventMember, EventRole } from '#/lib/types'
 
 export const Route = createFileRoute('/_app/events/$eventId/_organizer/team')({
   loader: ({ params }) => listMembersFn({ data: { eventId: params.eventId } }),
-  head: () => ({ meta: [{ title: 'Team' }] }),
+  head: () => ({ meta: [{ title: 'Équipe' }] }),
   component: TeamPage,
 })
 
@@ -43,9 +43,12 @@ function TeamPage() {
         params={{ eventId }}
         className={buttonVariants({ variant: 'ghost', size: 'sm', className: '-ml-2 mb-2 text-muted-foreground' })}
       >
-        <ChevronLeft data-icon="inline-start" /> Settings
+        <ChevronLeft data-icon="inline-start" /> Réglages
       </Link>
-      <PageHeader title="Team" description="Organizers run the event. Volunteers can only check guests in." />
+      <PageHeader
+        title="Équipe"
+        description="Les organisateurs gèrent l’événement. Les bénévoles font uniquement le check-in."
+      />
 
       <ItemGroup className="mb-6 gap-2">
         {members.map((member) => (
@@ -84,7 +87,7 @@ function MemberItem({ member, eventId, isYou }: { member: EventMember; eventId: 
       <ItemContent className="min-w-0">
         <ItemTitle className="w-full truncate">
           {member.name}
-          {isYou && <span className="font-normal text-muted-foreground"> (you)</span>}
+          {isYou && <span className="font-normal text-muted-foreground"> (vous)</span>}
         </ItemTitle>
         <ItemDescription className="truncate">{member.email}</ItemDescription>
       </ItemContent>
@@ -95,11 +98,11 @@ function MemberItem({ member, eventId, isYou }: { member: EventMember; eventId: 
             variant="ghost"
             size="icon"
             disabled={busy}
-            aria-label={`Send ${member.name} a sign-in link`}
+            aria-label={`Envoyer un lien de connexion à ${member.name}`}
             onClick={() =>
               run(
                 () => resendInviteFn({ data: { eventId, userId: member.userId } }),
-                `Sent a sign-in link to ${member.email}.`,
+                `Lien de connexion envoyé à ${member.email}.`,
               )
             }
           >
@@ -113,7 +116,7 @@ function MemberItem({ member, eventId, isYou }: { member: EventMember; eventId: 
                 variant="ghost"
                 size="icon"
                 disabled={busy}
-                aria-label={isYou ? 'Leave this event' : `Remove ${member.name}`}
+                aria-label={isYou ? 'Quitter cet événement' : `Retirer ${member.name}`}
               />
             }
           >
@@ -121,25 +124,27 @@ function MemberItem({ member, eventId, isYou }: { member: EventMember; eventId: 
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{isYou ? 'Leave this event?' : `Remove ${member.name}?`}</AlertDialogTitle>
+              <AlertDialogTitle>{isYou ? 'Quitter cet événement ?' : `Retirer ${member.name} ?`}</AlertDialogTitle>
               <AlertDialogDescription>
-                {isYou ? 'You will lose access to this event.' : 'They will lose access to this event right away.'}
+                {isYou
+                  ? 'Vous perdrez l’accès à cet événement.'
+                  : 'Cette personne perdra immédiatement l’accès à cet événement.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Keep</AlertDialogCancel>
+              <AlertDialogCancel>Garder</AlertDialogCancel>
               <Button
                 variant="destructive"
                 disabled={busy}
                 onClick={() =>
                   run(
                     () => removeMemberFn({ data: { eventId, userId: member.userId } }),
-                    isYou ? 'You left the event.' : `Removed ${member.name}.`,
+                    isYou ? 'Vous avez quitté l’événement.' : `${member.name} a été retiré de l’équipe.`,
                     isYou ? () => navigate({ to: '/events' }) : undefined,
                   )
                 }
               >
-                {busy && <Spinner />} {isYou ? 'Leave' : 'Remove'}
+                {busy && <Spinner />} {isYou ? 'Quitter' : 'Retirer'}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -165,8 +170,8 @@ function InviteCard({ eventId }: { eventId: string }) {
       const { invited } = await addMemberFn({ data: { eventId, ...form } })
       toast.success(
         invited
-          ? `Invited ${form.email}. They'll get an email to choose a password.`
-          : `Added ${form.email}. They'll see this event when they sign in.`,
+          ? `Invitation envoyée à ${form.email}. Un e-mail permettra de choisir un mot de passe.`
+          : `${form.email} a été ajouté. L’événement apparaîtra à la prochaine connexion.`,
       )
       setForm({ name: '', email: '', role: 'volunteer' })
       await router.invalidate()
@@ -179,13 +184,13 @@ function InviteCard({ eventId }: { eventId: string }) {
 
   return (
     <section>
-      <SectionTitle>Invite someone</SectionTitle>
+      <SectionTitle>Inviter quelqu’un</SectionTitle>
       <Card>
         <CardContent>
           <Form onSubmit={onSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="invite-name">Name</FieldLabel>
+                <FieldLabel htmlFor="invite-name">Nom</FieldLabel>
                 <Input
                   id="invite-name"
                   required
@@ -195,7 +200,7 @@ function InviteCard({ eventId }: { eventId: string }) {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="invite-email">Email</FieldLabel>
+                <FieldLabel htmlFor="invite-email">E-mail</FieldLabel>
                 <Input
                   id="invite-email"
                   type="email"
@@ -207,25 +212,25 @@ function InviteCard({ eventId }: { eventId: string }) {
                 />
               </Field>
               <Field>
-                <FieldLabel>Role</FieldLabel>
+                <FieldLabel>Rôle</FieldLabel>
                 <ToggleGroup
-                  aria-label="Role"
+                  aria-label="Rôle"
                   variant="outline"
                   spacing={0}
                   value={[form.role]}
                   onValueChange={(value) => value[0] && setForm((f) => ({ ...f, role: value[0] as EventRole }))}
                 >
-                  <ToggleGroupItem value="volunteer">Volunteer</ToggleGroupItem>
-                  <ToggleGroupItem value="organizer">Organizer</ToggleGroupItem>
+                  <ToggleGroupItem value="volunteer">Bénévole</ToggleGroupItem>
+                  <ToggleGroupItem value="organizer">Organisateur</ToggleGroupItem>
                 </ToggleGroup>
                 <FieldDescription>
                   {form.role === 'volunteer'
-                    ? 'Can scan tickets and check guests in. Nothing else.'
-                    : 'Can sell tickets, see and edit guests, edit the event and manage the team.'}
+                    ? 'Peut scanner les billets et faire le check-in. Rien d’autre.'
+                    : 'Peut vendre des billets, voir et modifier les invités, modifier l’événement et gérer l’équipe.'}
                 </FieldDescription>
               </Field>
               <Button type="submit" size="lg" disabled={pending}>
-                {pending && <Spinner />} Send invite
+                {pending && <Spinner />} Envoyer l’invitation
               </Button>
             </FieldGroup>
           </Form>

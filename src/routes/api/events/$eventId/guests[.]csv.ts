@@ -4,6 +4,8 @@ import { getEventAccess } from '#/server/access.server'
 import { getSessionUser } from '#/server/auth/auth.server'
 import { exportOrders } from '#/server/repo.server'
 
+const EMAIL_STATUS = { sent: 'envoye', failed: 'echec', not_sent: 'non_envoye' } as const
+
 function csvCell(value: string | number): string {
   let text = String(value ?? '')
   if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`
@@ -16,20 +18,20 @@ export const Route = createFileRoute('/api/events/$eventId/guests.csv')({
       GET: async ({ params }) => {
         const user = await getSessionUser()
         const access = user ? await getEventAccess(user, params.eventId) : null
-        if (access?.role !== 'organizer') return new Response('Not found', { status: 404 })
+        if (access?.role !== 'organizer') return new Response('Introuvable', { status: 404 })
         const header = [
-          'order',
+          'commande',
           'date',
-          'name',
+          'nom',
           'email',
-          'phone',
-          'tickets',
-          'amount',
-          'currency',
-          'status',
-          'checked_in',
-          'email_status',
-          'ticket_codes',
+          'telephone',
+          'billets',
+          'montant',
+          'devise',
+          'statut',
+          'arrives',
+          'statut_email',
+          'codes_billets',
           'notes',
         ]
         const lines = (await exportOrders(access.event.id)).map((r) =>
@@ -42,9 +44,9 @@ export const Route = createFileRoute('/api/events/$eventId/guests.csv')({
             r.quantity,
             minorToInput(r.amount, r.currency),
             r.currency,
-            r.cancelledAt ? 'cancelled' : 'paid',
+            r.cancelledAt ? 'annulee' : 'payee',
             r.checkedIn,
-            r.emailStatus,
+            EMAIL_STATUS[r.emailStatus],
             r.ticketCodes.map(formatCode).join(' '),
             r.notes,
           ]
@@ -56,7 +58,7 @@ export const Route = createFileRoute('/api/events/$eventId/guests.csv')({
         return new Response(csv, {
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
-            'Content-Disposition': `attachment; filename="guests-${access.event.id}-${date}.csv"`,
+            'Content-Disposition': `attachment; filename="invites-${access.event.id}-${date}.csv"`,
             'Cache-Control': 'no-store',
           },
         })

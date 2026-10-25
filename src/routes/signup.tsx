@@ -9,7 +9,7 @@ import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
-import { formText } from '#/lib/form'
+import { authErrorMessage, formText } from '#/lib/form'
 
 const MIN_LENGTH = 10
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/signup')({
   loader: async () => {
     if ((await getLoginStatusFn()).signedIn) throw redirect({ to: '/events' })
   },
-  head: () => ({ meta: [{ title: 'Create an account · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Créer un compte · Community Tickets' }] }),
   component: SignupPage,
 })
 
@@ -41,7 +41,7 @@ function SignupPage() {
     })
     setPending(false)
     if (error) {
-      setError(error.message ?? 'Could not create the account. Please try again.')
+      setError(authErrorMessage(error, 'Impossible de créer le compte. Réessayez.'))
       return
     }
     setSentTo(email)
@@ -50,11 +50,11 @@ function SignupPage() {
   if (sentTo) {
     return (
       <AuthCard
-        title="Check your inbox"
-        subtitle={`We sent a link to ${sentTo}.`}
+        title="Vérifiez votre boîte mail"
+        subtitle={`Nous avons envoyé un lien à ${sentTo}.`}
         footer={
           <p>
-            Already confirmed?{' '}
+            Déjà confirmé ?{' '}
             <Link to="/login" className={authLinkClass}>
               Sign in
             </Link>
@@ -62,8 +62,8 @@ function SignupPage() {
         }
       >
         <p className="text-[15px] text-muted-foreground">
-          Open the email and tap <strong className="text-foreground">Confirm email</strong> to finish creating your
-          account. The link works for 24 hours. Can't find it? Check your spam folder.
+          Ouvrez l’e-mail et appuyez sur <strong className="text-foreground">Confirmer mon e-mail</strong> pour terminer
+          la création de votre compte. Le lien est valable 24 heures. Introuvable ? Regardez dans les spams.
         </p>
       </AuthCard>
     )
@@ -71,11 +71,11 @@ function SignupPage() {
 
   return (
     <AuthCard
-      title="Create an account"
-      subtitle="Run events, sell tickets and check guests in."
+      title="Créer un compte"
+      subtitle="Organisez des événements, vendez des billets et accueillez vos invités."
       footer={
         <p>
-          Have an account?{' '}
+          Déjà un compte ?{' '}
           <Link to="/login" className={authLinkClass}>
             Sign in
           </Link>
@@ -85,11 +85,11 @@ function SignupPage() {
       <form method="post" onSubmit={onSubmit}>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="signup-name">Your name</FieldLabel>
+            <FieldLabel htmlFor="signup-name">Votre nom</FieldLabel>
             <Input id="signup-name" name="name" autoComplete="name" autoCapitalize="words" required />
           </Field>
           <Field>
-            <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+            <FieldLabel htmlFor="signup-email">E-mail</FieldLabel>
             <Input
               id="signup-email"
               type="email"
@@ -101,7 +101,7 @@ function SignupPage() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+            <FieldLabel htmlFor="signup-password">Mot de passe</FieldLabel>
             <Input
               id="signup-password"
               type="password"
@@ -110,7 +110,7 @@ function SignupPage() {
               minLength={MIN_LENGTH}
               required
             />
-            <FieldDescription>At least {MIN_LENGTH} characters.</FieldDescription>
+            <FieldDescription>Au moins {MIN_LENGTH} caractères.</FieldDescription>
           </Field>
           {error && (
             <Alert variant="destructive">
@@ -119,7 +119,7 @@ function SignupPage() {
             </Alert>
           )}
           <Button type="submit" size="lg" disabled={!hydrated || pending}>
-            {pending && <Spinner />} Create account
+            {pending && <Spinner />} Créer mon compte
           </Button>
         </FieldGroup>
       </form>

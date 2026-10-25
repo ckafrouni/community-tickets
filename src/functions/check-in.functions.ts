@@ -24,7 +24,7 @@ export const scanTicketFn = createServerFn({ method: 'POST' })
     await requireEventAccess(context.user, data.eventId, 'volunteer')
     const ticketId = await verifyTicket(data.token)
     if (!ticketId) {
-      return { status: 'invalid', reason: 'This QR code is not a genuine ticket (signature check failed).' }
+      return { status: 'invalid', reason: 'Ce QR code n’est pas un vrai billet (signature invalide).' }
     }
     return checkInTicket(data.eventId, ticketId, context.user.name)
   })
@@ -50,7 +50,7 @@ export const undoCheckInFn = createServerFn({ method: 'POST' })
   .validator(ticketRef)
   .handler(async ({ data, context }) => {
     await requireEventAccess(context.user, data.eventId, 'volunteer')
-    if (!(await undoCheckIn(data.eventId, data.ticketId))) throw new Error('Ticket not found')
+    if (!(await undoCheckIn(data.eventId, data.ticketId))) throw new Error('Billet introuvable')
     return { ok: true }
   })
 

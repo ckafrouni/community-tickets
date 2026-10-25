@@ -23,7 +23,7 @@ import { errorMessage } from '#/lib/schemas'
 
 export const Route = createFileRoute('/_app/events/$eventId/_organizer/settings')({
   loader: ({ params }) => eventEmailInfoFn({ data: { eventId: params.eventId } }),
-  head: () => ({ meta: [{ title: 'Settings' }] }),
+  head: () => ({ meta: [{ title: 'Réglages' }] }),
   component: SettingsPage,
 })
 
@@ -35,10 +35,10 @@ function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title="Réglages" />
 
       <section className="mb-6">
-        <SectionTitle>Manage</SectionTitle>
+        <SectionTitle>Gérer</SectionTitle>
         <ItemGroup className="gap-2">
           <Item
             variant="outline"
@@ -49,8 +49,8 @@ function SettingsPage() {
               <Users />
             </ItemMedia>
             <ItemContent>
-              <ItemTitle>Team</ItemTitle>
-              <ItemDescription>Organizers and volunteers</ItemDescription>
+              <ItemTitle>Équipe</ItemTitle>
+              <ItemDescription>Organisateurs et bénévoles</ItemDescription>
             </ItemContent>
             <ItemActions>
               <ChevronRight className="size-4 text-muted-foreground" />
@@ -61,8 +61,8 @@ function SettingsPage() {
               <Download />
             </ItemMedia>
             <ItemContent>
-              <ItemTitle>Export guest list</ItemTitle>
-              <ItemDescription>CSV for any spreadsheet app</ItemDescription>
+              <ItemTitle>Exporter la liste des invités</ItemTitle>
+              <ItemDescription>Fichier CSV pour Excel ou Google Sheets</ItemDescription>
             </ItemContent>
           </Item>
           <TestEmail eventId={id} emailFrom={emailFrom} />
@@ -71,11 +71,11 @@ function SettingsPage() {
 
       <EventForm
         initial={details}
-        submitLabel="Save changes"
+        submitLabel="Enregistrer"
         onSubmit={async (input) => {
           await updateEventFn({ data: { eventId: id, ...input } })
           await router.invalidate()
-          return 'Saved.'
+          return 'Enregistré.'
         }}
       />
     </>
@@ -93,7 +93,7 @@ function TestEmail({ eventId, emailFrom }: { eventId: string; emailFrom: string 
     try {
       await sendTestEmailFn({ data: { eventId, to } })
       setOpen(false)
-      toast.success(`Sent to ${to}. Check the inbox and the spam folder.`)
+      toast.success(`Envoyé à ${to}. Vérifiez la boîte de réception et les spams.`)
     } catch (err) {
       toast.error(errorMessage(err))
     } finally {
@@ -108,29 +108,29 @@ function TestEmail({ eventId, emailFrom }: { eventId: string; emailFrom: string 
           <Mail />
         </ItemMedia>
         <ItemContent className="min-w-0">
-          <ItemTitle>Test email</ItemTitle>
-          <ItemDescription className="truncate">Tickets come from {emailFrom}</ItemDescription>
+          <ItemTitle>E-mail de test</ItemTitle>
+          <ItemDescription className="truncate">Les billets partent de {emailFrom}</ItemDescription>
         </ItemContent>
         <ItemActions>
-          <DrawerTrigger render={<Button variant="secondary" size="sm" />}>Send</DrawerTrigger>
+          <DrawerTrigger render={<Button variant="secondary" size="sm" />}>Envoyer</DrawerTrigger>
         </ItemActions>
       </Item>
       <DrawerContent>
         <form onSubmit={onSubmit} className="flex flex-col">
           <DrawerHeader>
-            <DrawerTitle>Send a test email</DrawerTitle>
-            <DrawerDescription>Check that tickets reach real inboxes.</DrawerDescription>
+            <DrawerTitle>Envoyer un e-mail de test</DrawerTitle>
+            <DrawerDescription>Vérifiez que les billets arrivent bien dans les boîtes mail.</DrawerDescription>
           </DrawerHeader>
           <div className="px-4">
             <Field>
-              <FieldLabel htmlFor="test-email-to">Send to</FieldLabel>
+              <FieldLabel htmlFor="test-email-to">Destinataire</FieldLabel>
               <Input
                 id="test-email-to"
                 type="email"
                 inputMode="email"
                 autoCapitalize="none"
                 required
-                placeholder="you@example.com"
+                placeholder="vous@exemple.fr"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
               />
@@ -138,7 +138,7 @@ function TestEmail({ eventId, emailFrom }: { eventId: string; emailFrom: string 
           </div>
           <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <Button type="submit" size="lg" disabled={pending}>
-              {pending && <Spinner />} Send test
+              {pending && <Spinner />} Envoyer le test
             </Button>
           </DrawerFooter>
         </form>

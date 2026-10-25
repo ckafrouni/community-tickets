@@ -37,13 +37,13 @@ export function AppHeader({
         {back ? (
           <Link
             to="/events"
-            aria-label="All events"
+            aria-label="Tous les événements"
             className={buttonVariants({ variant: 'ghost', size: 'icon-lg', className: '-ml-2.5' })}
           >
             <ChevronLeft className="size-6" />
           </Link>
         ) : (
-          <Link to="/events" aria-label="Events" className="shrink-0">
+          <Link to="/events" aria-label="Événements" className="shrink-0">
             <Logo className="size-8 rounded-lg ring-1 ring-foreground/10" />
           </Link>
         )}
@@ -73,7 +73,7 @@ function AccountMenu() {
   return (
     <Drawer>
       <DrawerTrigger
-        aria-label="Account"
+        aria-label="Mon compte"
         className="shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
       >
         <PersonAvatar name={user.name} className="size-9" />
@@ -86,14 +86,14 @@ function AccountMenu() {
             <DrawerDescription className="truncate">{user.email}</DrawerDescription>
             {user.isAdmin && (
               <Badge variant="secondary" className="mt-1.5">
-                Platform admin
+                Administrateur
               </Badge>
             )}
           </div>
         </DrawerHeader>
         <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <Button variant="secondary" size="lg" disabled={pending} onClick={signOut}>
-            {pending ? <Spinner /> : <LogOut />} Sign out
+            {pending ? <Spinner /> : <LogOut />} Se déconnecter
           </Button>
         </DrawerFooter>
       </DrawerContent>

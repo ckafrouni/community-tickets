@@ -8,20 +8,24 @@ const optionalEmail = z
   .trim()
   .toLowerCase()
   .max(200)
-  .refine((v) => v === '' || isEmail(v), 'Enter a valid email address')
+  .refine((v) => v === '' || isEmail(v), 'Saisissez une adresse e-mail valide')
 
-const requiredEmail = z.string().trim().toLowerCase().max(200).refine(isEmail, 'Enter a valid email address')
+const requiredEmail = z.string().trim().toLowerCase().max(200).refine(isEmail, 'Saisissez une adresse e-mail valide')
 
 export const eventSchema = z.object({
-  name: z.string().trim().min(1, 'Event name is required').max(120),
+  name: z.string().trim().min(1, 'Le nom de l’événement est obligatoire').max(120),
   startsAt: z
     .string()
     .trim()
-    .refine((v) => v === '' || parseEventDate(v) !== null, 'Pick a date and time'),
+    .refine((v) => v === '' || parseEventDate(v) !== null, 'Choisissez une date et une heure'),
   venue: z.string().trim().max(200),
   info: z.string().trim().max(2000),
   ticketPrice: z.number().int().min(0).max(100_000_000),
-  currency: z.string().trim().toUpperCase().refine(isValidCurrency, 'Use a 3-letter currency code like USD or EUR'),
+  currency: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine(isValidCurrency, 'Utilisez un code devise à 3 lettres, par exemple EUR'),
   contactEmail: optionalEmail,
 })
 
@@ -33,29 +37,29 @@ export const NEW_EVENT: EventInput = {
   venue: '',
   info: '',
   ticketPrice: 1000,
-  currency: 'USD',
+  currency: 'EUR',
   contactEmail: '',
 }
 
 export const eventIdSchema = z.object({ eventId: z.string().min(1).max(32) })
 
 export const buyerSchema = z.object({
-  buyerName: z.string().trim().min(1, 'Name is required').max(120),
+  buyerName: z.string().trim().min(1, 'Le nom est obligatoire').max(120),
   buyerEmail: requiredEmail,
   buyerPhone: z.string().trim().max(40),
   notes: z.string().trim().max(1000),
 })
 
 export const saleSchema = buyerSchema.extend({
-  quantity: z.number().int().min(1, 'At least 1 ticket').max(50, 'At most 50 tickets per sale'),
+  quantity: z.number().int().min(1, 'Au moins 1 billet').max(50, '50 billets maximum par vente'),
   amount: z.number().int().min(0).max(100_000_000),
 })
 
 export type SaleInput = z.infer<typeof saleSchema>
 
 export const memberSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(120),
-  email: z.email('Enter a valid email address').trim().toLowerCase(),
+  name: z.string().trim().min(1, 'Le nom est obligatoire').max(120),
+  email: z.email('Saisissez une adresse e-mail valide').trim().toLowerCase(),
   role: z.enum(['organizer', 'volunteer']),
 })
 
@@ -65,5 +69,5 @@ export function errorMessage(error: unknown): string {
     const parsed = JSON.parse(message)
     if (Array.isArray(parsed) && parsed[0]?.message) return parsed[0].message
   } catch {}
-  return message || 'Something went wrong'
+  return message || 'Une erreur est survenue'
 }

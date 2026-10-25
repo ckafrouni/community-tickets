@@ -41,7 +41,7 @@ export function EventForm({
     const currency = input.currency.trim().toUpperCase()
     const minor = inputToMinor(price, currency)
     if (minor === null) {
-      toast.error('Enter a valid ticket price, e.g. 10 or 12.50.')
+      toast.error('Saisissez un prix valide, par exemple 10 ou 12,50.')
       return
     }
     setPending(true)
@@ -64,27 +64,27 @@ export function EventForm({
   return (
     <Form onSubmit={submit} className="gap-5">
       <section>
-        <SectionTitle>Event</SectionTitle>
+        <SectionTitle>Événement</SectionTitle>
         <Card>
           <CardContent>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="event-name">Name</FieldLabel>
+                <FieldLabel htmlFor="event-name">Nom</FieldLabel>
                 <Input
                   id="event-name"
                   required
                   autoCapitalize="words"
-                  placeholder="Summer Community Fair"
+                  placeholder="Fête de quartier"
                   {...field('name')}
                 />
               </Field>
               <EventDateTimeField value={form.startsAt} onChange={(startsAt) => setForm((f) => ({ ...f, startsAt }))} />
               <Field>
-                <FieldLabel htmlFor="event-venue">Location</FieldLabel>
+                <FieldLabel htmlFor="event-venue">Lieu</FieldLabel>
                 <Input
                   id="event-venue"
                   autoCapitalize="words"
-                  placeholder="Community Hall, 12 Main St"
+                  placeholder="Salle des fêtes, 12 rue de la Paix"
                   {...field('venue')}
                 />
               </Field>
@@ -94,13 +94,13 @@ export function EventForm({
       </section>
 
       <section>
-        <SectionTitle>Tickets</SectionTitle>
+        <SectionTitle>Billets</SectionTitle>
         <Card>
           <CardContent>
             <FieldGroup>
               <div className="grid grid-cols-[1fr_6.5rem] gap-3">
                 <Field>
-                  <FieldLabel htmlFor="event-price">Price</FieldLabel>
+                  <FieldLabel htmlFor="event-price">Prix</FieldLabel>
                   <InputGroup>
                     <InputGroupAddon>
                       <InputGroupText>{currencySymbol(form.currency.toUpperCase())}</InputGroupText>
@@ -109,7 +109,7 @@ export function EventForm({
                   </InputGroup>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="event-currency">Currency</FieldLabel>
+                  <FieldLabel htmlFor="event-currency">Devise</FieldLabel>
                   <Input
                     id="event-currency"
                     required
@@ -121,12 +121,14 @@ export function EventForm({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="event-info">Details for guests</FieldLabel>
+                <FieldLabel htmlFor="event-info">Infos pour les invités</FieldLabel>
                 <Textarea id="event-info" rows={3} {...field('info')} />
-                <FieldDescription>On every ticket and email: doors, parking, what to bring.</FieldDescription>
+                <FieldDescription>
+                  Sur chaque billet et e-mail : ouverture des portes, parking, quoi apporter.
+                </FieldDescription>
               </Field>
               <Field>
-                <FieldLabel htmlFor="event-contact">Contact email</FieldLabel>
+                <FieldLabel htmlFor="event-contact">E-mail de contact</FieldLabel>
                 <Input
                   id="event-contact"
                   type="email"
@@ -134,7 +136,7 @@ export function EventForm({
                   autoCapitalize="none"
                   {...field('contactEmail')}
                 />
-                <FieldDescription>Guests' replies to ticket emails go here.</FieldDescription>
+                <FieldDescription>Les réponses des invités aux e-mails de billets arrivent ici.</FieldDescription>
               </Field>
             </FieldGroup>
           </CardContent>

@@ -17,10 +17,10 @@ export const Route = createFileRoute('/_app/events/$eventId')({
 })
 
 const TABS = [
-  { to: '/events/$eventId/sell', label: 'Sell', icon: CirclePlus },
-  { to: '/events/$eventId/guests', label: 'Guests', icon: Users },
-  { to: '/events/$eventId/check-in', label: 'Check in', icon: ScanLine },
-  { to: '/events/$eventId/settings', label: 'Settings', icon: Settings },
+  { to: '/events/$eventId/sell', label: 'Vendre', icon: CirclePlus },
+  { to: '/events/$eventId/guests', label: 'Invités', icon: Users },
+  { to: '/events/$eventId/check-in', label: 'Check-in', icon: ScanLine },
+  { to: '/events/$eventId/settings', label: 'Réglages', icon: Settings },
 ] as const
 
 function EventLayout() {
@@ -32,7 +32,7 @@ function EventLayout() {
     <>
       <AppHeader back title={event.name} subtitle={subtitle || undefined}>
         {isOrganizer && (
-          <nav aria-label="Event" className="mx-auto hidden max-w-3xl gap-1 px-4 pb-2.5 md:flex">
+          <nav aria-label="Événement" className="mx-auto hidden max-w-3xl gap-1 px-4 pb-2.5 md:flex">
             {TABS.map((tab) => (
               <Link
                 key={tab.to}
@@ -54,7 +54,7 @@ function EventLayout() {
 
       {isOrganizer && (
         <nav
-          aria-label="Event"
+          aria-label="Événement"
           className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
         >
           <div className="mx-auto grid max-w-md grid-cols-4">
@@ -80,19 +80,19 @@ function EventLayout() {
 function EventNotFound() {
   return (
     <>
-      <AppHeader back title="Event not found" />
+      <AppHeader back title="Événement introuvable" />
       <Main>
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <CalendarX2 />
             </EmptyMedia>
-            <EmptyTitle>Event not found</EmptyTitle>
-            <EmptyDescription>It doesn't exist, or you're not on its team.</EmptyDescription>
+            <EmptyTitle>Événement introuvable</EmptyTitle>
+            <EmptyDescription>Il n’existe pas, ou vous ne faites pas partie de son équipe.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Link to="/events" className={buttonVariants({ variant: 'outline' })}>
-              Back to events
+              Retour aux événements
             </Link>
           </EmptyContent>
         </Empty>

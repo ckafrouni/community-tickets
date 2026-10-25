@@ -1,14 +1,27 @@
 {
   "name": "Community Tickets",
-  "short_name": "Tickets",
-  "description": "Sell tickets for cash, email QR tickets, and check guests in at the door.",
+  "short_name": "Billets",
+  "description": "Vendez des billets, envoyez les QR codes et faites le check-in de vos invités.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8f5ec",
   "theme_color": "#2c2f31",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
-  ]
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "lang": "fr"
 }

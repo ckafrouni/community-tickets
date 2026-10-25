@@ -48,7 +48,7 @@ export const auth = betterAuth({
       const ip = ctx.request?.headers.get('cf-connecting-ip') ?? 'local'
       const { success } = await env.LOGIN_RATE_LIMITER.limit({ key: `${ctx.path}:${ip}` })
       if (!success) {
-        throw new APIError('TOO_MANY_REQUESTS', { message: 'Too many attempts. Please wait a minute and try again.' })
+        throw new APIError('TOO_MANY_REQUESTS', { message: 'Trop de tentatives. Patientez une minute puis réessayez.' })
       }
     }),
   },

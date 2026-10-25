@@ -8,7 +8,7 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
       { name: 'theme-color', content: '#ffffff' },
-      { name: 'apple-mobile-web-app-title', content: 'Tickets' },
+      { name: 'apple-mobile-web-app-title', content: 'Billets' },
       { title: 'Community Tickets' },
     ],
     links: [
@@ -25,7 +25,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
@@ -42,9 +42,9 @@ function NotFound() {
   return (
     <div className="mx-auto max-w-md px-4 py-24 text-center">
       <p className="text-5xl font-bold text-muted-foreground/40">404</p>
-      <h1 className="mt-4 text-xl font-semibold">Page not found</h1>
+      <h1 className="mt-4 text-xl font-semibold">Page introuvable</h1>
       <Link to="/" className="mt-6 inline-block font-medium underline-offset-4 hover:underline">
-        Go home
+        Retour à l’accueil
       </Link>
     </div>
   )

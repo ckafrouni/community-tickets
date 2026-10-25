@@ -26,7 +26,7 @@ import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/events/$eventId/check-in')({
   loader: ({ params }) => checkInOverviewFn({ data: { eventId: params.eventId } }),
-  head: () => ({ meta: [{ title: 'Check in' }] }),
+  head: () => ({ meta: [{ title: 'Check-in' }] }),
   component: CheckInPage,
 })
 
@@ -86,7 +86,7 @@ function CheckInPage() {
         feedback.play(false)
         setOutcome({
           kind: 'result',
-          result: { status: 'invalid', reason: "This QR code isn't a ticket for this event." },
+          result: { status: 'invalid', reason: 'Ce QR code n’est pas un billet de cet événement.' },
         })
         return
       }
@@ -117,12 +117,12 @@ function CheckInPage() {
     <div className="mx-auto flex max-w-md flex-col gap-6">
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Check in</h1>
+          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Check-in</h1>
           <p className="text-[15px] font-semibold text-muted-foreground tabular-nums">
             <span className="text-foreground">{overview.checkedIn}</span> / {overview.ticketsSold}
           </p>
         </div>
-        <Progress value={percent} aria-label="Guests checked in" className="mt-3" />
+        <Progress value={percent} aria-label="Invités arrivés" className="mt-3" />
       </div>
 
       <QrCameraScanner onScan={handleScan} onStart={feedback.prime}>
@@ -133,7 +133,7 @@ function CheckInPage() {
 
       {overview.recent.length > 0 && (
         <section>
-          <SectionTitle>Recently checked in</SectionTitle>
+          <SectionTitle>Derniers arrivés</SectionTitle>
           <ItemGroup className="gap-2">
             {overview.recent.map((t) => (
               <Item key={t.id} variant="outline" size="sm" className="bg-card">
@@ -143,7 +143,7 @@ function CheckInPage() {
                 <ItemContent className="min-w-0">
                   <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
                   <ItemDescription>
-                    {t.seq} of {t.quantity} · {formatCode(t.code)}
+                    {t.seq} sur {t.quantity} · {formatCode(t.code)}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions className="text-sm text-muted-foreground">
@@ -196,7 +196,7 @@ function ScanResultOverlay({
 
   let tone = 'bg-neutral-800'
   let icon = <TriangleAlert className="size-7" />
-  let title = 'Could not verify'
+  let title = 'Vérification impossible'
   let detail: React.ReactNode = outcome.kind === 'error' ? outcome.message : null
 
   if (result) {
@@ -204,30 +204,30 @@ function ScanResultOverlay({
       case 'checked_in':
         tone = 'bg-emerald-600'
         icon = <Check className="size-7" strokeWidth={3} />
-        title = 'Welcome!'
+        title = 'Bienvenue !'
         break
       case 'already_checked_in':
         tone = 'bg-amber-500'
         icon = <TriangleAlert className="size-7" />
-        title = 'Already checked in'
+        title = 'Check-in déjà fait'
         detail = (
           <>
-            Used <LocalTime iso={result.ticket.checkedInAt!} mode="ago" /> (at{' '}
+            Utilisé <LocalTime iso={result.ticket.checkedInAt!} mode="ago" /> (à{' '}
             <LocalTime iso={result.ticket.checkedInAt!} mode="time" />
-            ). If this isn't the same person, it may be a copied ticket.
+            ). Si ce n’est pas la même personne, le billet a peut-être été copié.
           </>
         )
         break
       case 'cancelled':
         tone = 'bg-red-600'
         icon = <X className="size-7" strokeWidth={3} />
-        title = 'Cancelled: do not admit'
-        detail = 'This order was cancelled or refunded.'
+        title = 'Annulé : ne pas faire entrer'
+        detail = 'Cette commande a été annulée ou remboursée.'
         break
       case 'invalid':
         tone = 'bg-red-600'
         icon = <X className="size-7" strokeWidth={3} />
-        title = 'Not a valid ticket'
+        title = 'Billet non valide'
         detail = result.reason
         break
     }
@@ -242,13 +242,13 @@ function ScanResultOverlay({
           <>
             <p className="line-clamp-2 font-heading text-3xl leading-tight font-bold break-words">{ticket.buyerName}</p>
             <p className="text-sm opacity-90">
-              Ticket {ticket.seq} of {ticket.quantity} · {formatCode(ticket.code)}
+              Billet {ticket.seq} sur {ticket.quantity} · {formatCode(ticket.code)}
             </p>
           </>
         )}
         {detail && <p className="max-w-xs text-sm opacity-95">{detail}</p>}
         {result?.status === 'checked_in' && remaining > 0 && !note && (
-          <p className="text-sm font-semibold">{plural(remaining, 'more ticket')} on this order not checked in yet.</p>
+          <p className="text-sm font-semibold">{plural(remaining, 'autre billet')} de cette commande sans check-in.</p>
         )}
         {note && <p className="rounded-full bg-black/20 px-3 py-1 text-sm font-semibold">{note}</p>}
       </div>
@@ -261,11 +261,11 @@ function ScanResultOverlay({
             onClick={() =>
               act(async () => {
                 const { count } = await checkInRemainingFn({ data: { eventId, orderId: result.ticket.orderId } })
-                return `Admitted ${plural(count, 'more guest')}.`
+                return `${plural(count, 'check-in')} de plus.`
               })
             }
           >
-            {busy && <Spinner />} Admit {remaining} more
+            {busy && <Spinner />} {remaining > 1 ? `Check-in des ${remaining} autres` : 'Check-in de l’autre billet'}
           </Button>
         )}
         <div className="grid grid-cols-[auto_1fr] gap-2">
@@ -278,17 +278,17 @@ function ScanResultOverlay({
               onClick={() =>
                 act(async () => {
                   await undoCheckInFn({ data: { eventId, ticketId: result.ticket.id } })
-                  return 'Check-in undone.'
+                  return 'Check-in annulé.'
                 })
               }
             >
-              <RotateCcw /> Undo
+              <RotateCcw /> Annuler
             </Button>
           ) : (
             <span />
           )}
           <Button size="lg" className="bg-black/25 text-white hover:bg-black/35" onClick={onDismiss} autoFocus>
-            Scan next
+            Suivant
           </Button>
         </div>
       </div>
@@ -357,19 +357,19 @@ function ManualLookup({
 
   return (
     <section className="flex flex-col gap-3">
-      <SectionTitle>Find a guest</SectionTitle>
+      <SectionTitle>Trouver un invité</SectionTitle>
       <InputGroup>
         <InputGroupAddon>{loading ? <Spinner /> : <Search />}</InputGroupAddon>
         <InputGroupInput
           type="search"
           autoComplete="off"
-          placeholder="Name, email or ticket code"
-          aria-label="Find a guest"
+          placeholder="Nom, e-mail ou code du billet"
+          aria-label="Trouver un invité"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </InputGroup>
-      {results && results.length === 0 && <p className="px-1 text-sm text-muted-foreground">No tickets found.</p>}
+      {results && results.length === 0 && <p className="px-1 text-sm text-muted-foreground">Aucun billet trouvé.</p>}
       {results && results.length > 0 && (
         <ItemGroup className="gap-2">
           {results.map((t) => (
@@ -380,12 +380,12 @@ function ManualLookup({
               <ItemContent className="min-w-0">
                 <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
                 <ItemDescription>
-                  {t.seq} of {t.quantity} · {formatCode(t.code)}
+                  {t.seq} sur {t.quantity} · {formatCode(t.code)}
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
                 {t.cancelled ? (
-                  <Badge variant="destructive">Cancelled</Badge>
+                  <Badge variant="destructive">Annulé</Badge>
                 ) : (
                   <Button
                     variant={t.checkedInAt ? 'secondary' : 'default'}
@@ -394,7 +394,7 @@ function ManualLookup({
                     className="min-w-24"
                   >
                     {busyId === t.id && <Spinner />}
-                    {t.checkedInAt ? 'Undo' : 'Check in'}
+                    {t.checkedInAt ? 'Annuler' : 'Check-in'}
                   </Button>
                 )}
               </ItemActions>

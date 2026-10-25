@@ -15,7 +15,7 @@ import type { EventListItem } from '#/lib/types'
 
 export const Route = createFileRoute('/_app/events/')({
   loader: () => listEventsFn(),
-  head: () => ({ meta: [{ title: 'Events · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Événements · Community Tickets' }] }),
   component: EventsPage,
 })
 
@@ -28,7 +28,7 @@ function groupByDay(events: EventListItem[]) {
     const key = when ? event.startsAt.slice(0, 10) : 'tbd'
     let group = groups.find((g) => g.key === key)
     if (!group) {
-      group = { key, label: when ? when.date : 'Date to be announced', events: [] }
+      group = { key, label: when ? when.date : 'Date à venir', events: [] }
       groups.push(group)
     }
     group.events.push(event)
@@ -47,23 +47,23 @@ function EventsPage() {
       <AppHeader title="Community Tickets" />
       <Main>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Events</h1>
+          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Événements</h1>
           <Link to="/events/new" className={buttonVariants()}>
-            <Plus data-icon="inline-start" /> Create
+            <Plus data-icon="inline-start" /> Créer
           </Link>
         </div>
 
         {events.length > 0 && (
           <ToggleGroup
-            aria-label="Show"
+            aria-label="Afficher"
             variant="outline"
             spacing={0}
             value={[tab]}
             onValueChange={(value) => value[0] && setTab(value[0] as Tab)}
             className="mb-5"
           >
-            <ToggleGroupItem value="upcoming">Upcoming</ToggleGroupItem>
-            <ToggleGroupItem value="past">Past</ToggleGroupItem>
+            <ToggleGroupItem value="upcoming">À venir</ToggleGroupItem>
+            <ToggleGroupItem value="past">Passés</ToggleGroupItem>
           </ToggleGroup>
         )}
 
@@ -75,21 +75,21 @@ function EventsPage() {
               </EmptyMedia>
               <EmptyTitle>
                 {events.length === 0
-                  ? 'Create your first event'
+                  ? 'Créez votre premier événement'
                   : tab === 'upcoming'
-                    ? 'No upcoming events'
-                    : 'No past events'}
+                    ? 'Aucun événement à venir'
+                    : 'Aucun événement passé'}
               </EmptyTitle>
               {events.length === 0 && (
                 <EmptyDescription>
-                  Sell tickets for cash, email QR codes and check guests in at the door.
+                  Vendez des billets, envoyez les QR codes par e-mail et accueillez vos invités à l’entrée.
                 </EmptyDescription>
               )}
             </EmptyHeader>
             {events.length === 0 && (
               <EmptyContent>
                 <Link to="/events/new" className={buttonVariants()}>
-                  Create event
+                  Créer un événement
                 </Link>
               </EmptyContent>
             )}
@@ -136,7 +136,7 @@ function EventItem({ event }: { event: EventListItem }) {
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <Badge variant={event.role === 'organizer' ? 'default' : 'secondary'}>{ROLE_LABELS[event.role]}</Badge>
           <span className="text-xs text-muted-foreground tabular-nums">
-            {event.ticketsSold} sold · {event.checkedIn} in
+            {event.ticketsSold} vendus · {event.checkedIn} arrivés
           </span>
         </div>
       </ItemContent>

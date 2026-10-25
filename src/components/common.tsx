@@ -151,11 +151,11 @@ export function LocalTime({ iso, mode = 'datetime' }: { iso: string; mode?: 'dat
 export function EmailStatusBadge({ status }: { status: EmailStatus }) {
   switch (status) {
     case 'sent':
-      return <Badge variant="success">Emailed</Badge>
+      return <Badge variant="success">E-mail envoyé</Badge>
     case 'failed':
-      return <Badge variant="destructive">Email failed</Badge>
+      return <Badge variant="destructive">Échec de l’e-mail</Badge>
     default:
-      return <Badge variant="secondary">Not emailed</Badge>
+      return <Badge variant="secondary">E-mail non envoyé</Badge>
   }
 }
 

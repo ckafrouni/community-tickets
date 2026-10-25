@@ -6,7 +6,7 @@ import { createEventFn } from '#/functions/events.functions'
 import { NEW_EVENT } from '#/lib/schemas'
 
 export const Route = createFileRoute('/_app/events/new')({
-  head: () => ({ meta: [{ title: 'New event · Community Tickets' }] }),
+  head: () => ({ meta: [{ title: 'Nouvel événement · Community Tickets' }] }),
   component: NewEventPage,
 })
 
@@ -14,12 +14,12 @@ function NewEventPage() {
   const navigate = useNavigate()
   return (
     <>
-      <AppHeader back title="New event" />
+      <AppHeader back title="Nouvel événement" />
       <Main>
-        <PageHeader title="Create an event" />
+        <PageHeader title="Créer un événement" />
         <EventForm
           initial={NEW_EVENT}
-          submitLabel="Create event"
+          submitLabel="Créer l’événement"
           sticky
           onSubmit={async (input) => {
             const { eventId } = await createEventFn({ data: input })

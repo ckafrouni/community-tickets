@@ -6,7 +6,7 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(asyn
   const user = await getSessionUser()
   if (!user) {
     setResponseStatus(401)
-    throw new Error('Your session has expired. Please sign in again.')
+    throw new Error('Votre session a expiré. Reconnectez-vous.')
   }
   setResponseHeader('Cache-Control', 'no-store')
   return next({ context: { user } })

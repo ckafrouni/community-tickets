@@ -38,7 +38,7 @@ export const addMemberFn = createServerFn({ method: 'POST' })
     const { event } = await requireEventAccess(context.user, data.eventId, 'organizer')
     const existing = await findUserByEmail(data.email)
     if (existing) {
-      if (await getMemberRole(event.id, existing.id)) throw new Error(`${existing.email} is already on the team.`)
+      if (await getMemberRole(event.id, existing.id)) throw new Error(`${existing.email} fait déjà partie de l’équipe.`)
       await addMember(event.id, existing.id, data.role)
       await sendAddedToEventEmail({ to: existing, event, role: data.role, url: `${getBaseUrl()}/events/${event.id}` })
       return { invited: false }
@@ -55,7 +55,7 @@ export const resendInviteFn = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     await requireEventAccess(context.user, data.eventId, 'organizer')
     const member = (await listMembers(data.eventId)).find((m) => m.userId === data.userId)
-    if (!member) throw new Error('Not on the team.')
+    if (!member) throw new Error('Cette personne ne fait pas partie de l’équipe.')
     await sendInvite(data.eventId, member.email)
     return { ok: true }
   })
@@ -66,9 +66,9 @@ export const removeMemberFn = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     await requireEventAccess(context.user, data.eventId, 'organizer')
     const role = await getMemberRole(data.eventId, data.userId)
-    if (!role) throw new Error('Not on the team.')
+    if (!role) throw new Error('Cette personne ne fait pas partie de l’équipe.')
     if (role === 'organizer' && (await countOrganizers(data.eventId)) <= 1) {
-      throw new Error('An event needs at least one organizer. Add another organizer first.')
+      throw new Error('Un événement doit avoir au moins un organisateur. Ajoutez-en un autre d’abord.')
     }
     await removeMember(data.eventId, data.userId)
     return { ok: true }
