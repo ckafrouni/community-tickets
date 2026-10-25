@@ -12,6 +12,7 @@ import { Progress } from '#/components/ui/progress'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { listOrdersFn } from '#/functions/orders.functions'
 import { formatMoney, plural } from '#/lib/format'
+import { paymentReference, paymentStatus } from '#/lib/payments'
 import type { OrderSummary } from '#/lib/types'
 import { cn } from '#/lib/utils'
 
@@ -25,11 +26,12 @@ export const Route = createFileRoute('/_app/events/$eventId/_organizer/guests/')
   component: GuestsPage,
 })
 
-type Filter = 'all' | 'waiting' | 'arrived'
+type Filter = 'all' | 'unpaid' | 'waiting' | 'arrived'
 
 function matches(order: OrderSummary, filter: Filter) {
   if (filter === 'all') return true
   if (order.cancelledAt) return false
+  if (filter === 'unpaid') return paymentStatus(order) !== 'paid'
   return filter === 'arrived' ? order.checkedIn > 0 : order.checkedIn < order.quantity
 }
 
@@ -81,6 +83,12 @@ function GuestsPage() {
           </div>
           <Stat label="Encaissé" value={formatMoney(stats.revenue, currency)} />
         </CardContent>
+        {stats.outstanding > 0 && (
+          <p className="-mt-1 text-center text-sm text-muted-foreground">
+            À encaisser :{' '}
+            <span className="font-medium text-foreground">{formatMoney(stats.outstanding, currency)}</span>
+          </p>
+        )}
       </Card>
 
       {(orders.length > 0 || q) && (
@@ -92,7 +100,7 @@ function GuestsPage() {
             <InputGroupInput
               type="search"
               autoComplete="off"
-              placeholder="Rechercher un invité ou un code"
+              placeholder="Nom, e-mail, référence CT… ou code"
               aria-label="Rechercher un invité"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -104,8 +112,10 @@ function GuestsPage() {
             spacing={0}
             value={[filter]}
             onValueChange={(value) => value[0] && setFilter(value[0] as Filter)}
+            className="max-w-full overflow-x-auto"
           >
             <ToggleGroupItem value="all">Tous</ToggleGroupItem>
+            <ToggleGroupItem value="unpaid">À payer</ToggleGroupItem>
             <ToggleGroupItem value="waiting">Pas arrivés</ToggleGroupItem>
             <ToggleGroupItem value="arrived">Arrivés</ToggleGroupItem>
           </ToggleGroup>
@@ -173,12 +183,17 @@ function GuestItem({ order, eventId }: { order: OrderSummary; eventId: string })
           {order.emailStatus === 'failed' && (
             <MailX className="size-3.5 shrink-0 text-destructive" aria-label="Échec de l’e-mail" />
           )}
-          {plural(order.quantity, 'billet')} · {formatMoney(order.amount, order.currency)}
+          {plural(order.quantity, 'billet')} · {formatMoney(order.amount, order.currency)} ·{' '}
+          {paymentReference(order.id)}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
         {cancelled ? (
           <Badge variant="destructive">Annulée</Badge>
+        ) : paymentStatus(order) !== 'paid' ? (
+          <Badge variant="warning">
+            {order.paid > 0 ? `Reste ${formatMoney(order.amount - order.paid, order.currency)}` : 'À payer'}
+          </Badge>
         ) : order.checkedIn === order.quantity ? (
           <Badge variant="success">Arrivé</Badge>
         ) : order.checkedIn > 0 ? (

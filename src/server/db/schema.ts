@@ -1,27 +1,42 @@
 import { sql } from 'drizzle-orm'
 import { check, index, integer, primaryKey, snakeCase, text, unique } from 'drizzle-orm/sqlite-core'
-import type { EmailStatus, EventRole } from '#/lib/types'
+import type { EmailStatus, EventRole, PaymentMethod } from '#/lib/types'
 import { user } from './auth-schema'
 
 export * from './auth-schema'
 
-export const events = snakeCase.table(
-  'events',
+export const events = snakeCase.table('events', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  startsAt: text().notNull().default(''),
+  venue: text().notNull().default(''),
+  info: text().notNull().default(''),
+  currency: text().notNull(),
+  contactEmail: text().notNull().default(''),
+  bankDetails: text().notNull().default(''),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  createdAt: text().notNull(),
+})
+
+export const ticketTypes = snakeCase.table(
+  'ticket_types',
   {
-    id: text().primaryKey(),
-    name: text().notNull(),
-    startsAt: text().notNull().default(''),
-    venue: text().notNull().default(''),
-    info: text().notNull().default(''),
-    ticketPrice: integer().notNull(),
-    currency: text().notNull(),
-    contactEmail: text().notNull().default(''),
-    createdBy: text()
+    id: integer().primaryKey({ autoIncrement: true }),
+    eventId: text()
       .notNull()
-      .references(() => user.id),
+      .references(() => events.id, { onDelete: 'cascade' }),
+    name: text().notNull(),
+    price: integer().notNull(),
+    position: integer().notNull().default(0),
     createdAt: text().notNull(),
+    archivedAt: text(),
   },
-  (t) => [check('events_ticket_price_not_negative', sql`${t.ticketPrice} >= 0`)],
+  (t) => [
+    index('ticket_types_event_id_idx').on(t.eventId),
+    check('ticket_types_price_not_negative', sql`${t.price} >= 0`),
+  ],
 )
 
 export const eventMembers = snakeCase.table(
@@ -59,12 +74,29 @@ export const orders = snakeCase.table(
     emailStatus: text().$type<EmailStatus>().notNull().default('not_sent'),
     emailUpdatedAt: text(),
     emailError: text().notNull().default(''),
+    ticketsSentAt: text(),
   },
   (t) => [
     index('orders_event_id_idx').on(t.eventId),
     check('orders_quantity_positive', sql`${t.quantity} > 0`),
     check('orders_amount_not_negative', sql`${t.amount} >= 0`),
   ],
+)
+
+export const payments = snakeCase.table(
+  'payments',
+  {
+    id: integer().primaryKey({ autoIncrement: true }),
+    orderId: integer()
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    amount: integer().notNull(),
+    method: text().$type<PaymentMethod>().notNull(),
+    note: text().notNull().default(''),
+    receivedAt: text().notNull(),
+    recordedBy: text().notNull().default(''),
+  },
+  (t) => [index('payments_order_id_idx').on(t.orderId), check('payments_amount_positive', sql`${t.amount} > 0`)],
 )
 
 export const tickets = snakeCase.table(
@@ -75,6 +107,7 @@ export const tickets = snakeCase.table(
     orderId: integer()
       .notNull()
       .references(() => orders.id),
+    ticketTypeId: integer().references(() => ticketTypes.id),
     seq: integer().notNull(),
     createdAt: text().notNull(),
     checkedInAt: text(),

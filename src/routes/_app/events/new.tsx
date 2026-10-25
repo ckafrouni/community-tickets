@@ -3,7 +3,7 @@ import { AppHeader, Main } from '#/components/AppHeader'
 import { PageHeader } from '#/components/common'
 import { EventForm } from '#/components/EventForm'
 import { createEventFn } from '#/functions/events.functions'
-import { NEW_EVENT } from '#/lib/schemas'
+import { NEW_EVENT, NEW_TICKET_TYPES } from '#/lib/schemas'
 
 export const Route = createFileRoute('/_app/events/new')({
   head: () => ({ meta: [{ title: 'Nouvel événement · Community Tickets' }] }),
@@ -19,10 +19,11 @@ function NewEventPage() {
         <PageHeader title="Créer un événement" />
         <EventForm
           initial={NEW_EVENT}
+          initialTypes={NEW_TICKET_TYPES}
           submitLabel="Créer l’événement"
           sticky
-          onSubmit={async (input) => {
-            const { eventId } = await createEventFn({ data: input })
+          onSubmit={async (input, ticketTypes) => {
+            const { eventId } = await createEventFn({ data: { ...input, ticketTypes } })
             await navigate({ to: '/events/$eventId', params: { eventId } })
           }}
         />

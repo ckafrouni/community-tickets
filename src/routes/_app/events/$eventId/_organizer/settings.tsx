@@ -2,7 +2,9 @@ import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { ChevronRight, Download, Mail, Users } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { PageHeader, SectionTitle } from '#/components/common'
+import { Form, PageHeader, SectionTitle } from '#/components/common'
+import { TicketTypesEditor, fromRows, toRows } from '#/components/TicketTypesEditor'
+import { Card, CardContent } from '#/components/ui/card'
 import { EventForm } from '#/components/EventForm'
 import { Button } from '#/components/ui/button'
 import {
@@ -18,18 +20,31 @@ import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '#/components/ui/item'
 import { Spinner } from '#/components/ui/spinner'
-import { eventEmailInfoFn, sendTestEmailFn, updateEventFn } from '#/functions/events.functions'
+import {
+  eventEmailInfoFn,
+  listTicketTypesFn,
+  saveTicketTypesFn,
+  sendTestEmailFn,
+  updateEventFn,
+} from '#/functions/events.functions'
 import { errorMessage } from '#/lib/schemas'
+import type { TicketType } from '#/lib/types'
 
 export const Route = createFileRoute('/_app/events/$eventId/_organizer/settings')({
-  loader: ({ params }) => eventEmailInfoFn({ data: { eventId: params.eventId } }),
+  loader: async ({ params }) => {
+    const [info, ticketTypes] = await Promise.all([
+      eventEmailInfoFn({ data: { eventId: params.eventId } }),
+      listTicketTypesFn({ data: { eventId: params.eventId } }),
+    ])
+    return { ...info, ticketTypes }
+  },
   head: () => ({ meta: [{ title: 'Réglages' }] }),
   component: SettingsPage,
 })
 
 function SettingsPage() {
   const { event } = Route.useRouteContext()
-  const { emailFrom } = Route.useLoaderData()
+  const { emailFrom, ticketTypes } = Route.useLoaderData()
   const router = useRouter()
   const { id, ...details } = event
 
@@ -68,6 +83,8 @@ function SettingsPage() {
           <TestEmail eventId={id} emailFrom={emailFrom} />
         </ItemGroup>
       </section>
+
+      <TicketTypesCard eventId={id} currency={event.currency} initial={ticketTypes} />
 
       <EventForm
         initial={details}
@@ -144,5 +161,54 @@ function TestEmail({ eventId, emailFrom }: { eventId: string; emailFrom: string 
         </form>
       </DrawerContent>
     </Drawer>
+  )
+}
+
+function TicketTypesCard({ eventId, currency, initial }: { eventId: string; currency: string; initial: TicketType[] }) {
+  const router = useRouter()
+  const [rows, setRows] = useState(() => toRows(initial, currency))
+  const [pending, setPending] = useState(false)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const types = fromRows(rows, currency)
+    if (typeof types === 'string') {
+      toast.error(types)
+      return
+    }
+    setPending(true)
+    try {
+      await saveTicketTypesFn({ data: { eventId, types } })
+      await router.invalidate()
+      toast.success('Tarifs enregistrés.')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const sold = initial.filter((type) => type.sold > 0)
+
+  return (
+    <section className="mb-6">
+      <SectionTitle>Tarifs</SectionTitle>
+      <Card>
+        <CardContent>
+          <Form onSubmit={onSubmit} className="gap-4">
+            <TicketTypesEditor rows={rows} currency={currency} onChange={setRows} />
+            {sold.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Déjà vendus : {sold.map((type) => `${type.name} × ${type.sold}`).join(', ')}. Changer un prix ne modifie
+                pas les ventes déjà faites ; un tarif déjà vendu est masqué plutôt que supprimé.
+              </p>
+            )}
+            <Button type="submit" size="lg" disabled={pending}>
+              {pending && <Spinner />} Enregistrer les tarifs
+            </Button>
+          </Form>
+        </CardContent>
+      </Card>
+    </section>
   )
 }

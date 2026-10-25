@@ -29,10 +29,12 @@ export const getPublicTicketFn = createServerFn({ method: 'GET' })
         quantity: ticket.quantity,
         orderId: ticket.orderId,
         buyerName: ticket.buyerName,
+        typeName: ticket.typeName,
         checkedInAt: ticket.checkedInAt,
         cancelled: ticket.cancelled,
+        paid: ticket.paid,
       },
-      qrSvg: qrSvg(await ticketUrl(getBaseUrl(), ticket.id)),
+      qrSvg: ticket.paid ? qrSvg(await ticketUrl(getBaseUrl(), ticket.id)) : '',
       staff: access ? { eventId: event.id, ticketId: ticket.id } : null,
     }
   })

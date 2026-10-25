@@ -1,9 +1,25 @@
 import { env } from 'cloudflare:workers'
+import { paymentReference, paymentStatus } from '#/lib/payments'
 import type { EmailStatus, EventDetails, EventRole } from '#/lib/types'
 import { bytesToBase64 } from './crypto.server'
-import { renderActionEmail, renderTicketEmail, ticketEmailSubject, type EmailTicket } from './email-template.server'
+import {
+  paymentRequestSubject,
+  renderActionEmail,
+  renderPaymentRequestEmail,
+  renderTicketEmail,
+  ticketEmailSubject,
+  type EmailTicket,
+} from './email-template.server'
 import { qrPng } from './qr.server'
-import { getEvent, getMemberRole, getOrder, getOrderTickets, setEmailStatus } from './repo.server'
+import {
+  getEvent,
+  getMemberRole,
+  getOrder,
+  getOrderTickets,
+  listPayments,
+  markTicketsSent,
+  setEmailStatus,
+} from './repo.server'
 import { ticketUrl } from './tickets.server'
 
 const APP_NAME = 'Community Tickets'
@@ -31,51 +47,86 @@ export function roleLabel(role: EventRole) {
   return role === 'organizer' ? 'organisateur' : 'bénévole'
 }
 
-export async function sendTicketEmail(
-  eventId: string,
-  orderId: number,
-  baseUrl: string,
-): Promise<{ status: EmailStatus; error?: string }> {
+type EmailResult = { status: EmailStatus; kind: 'tickets' | 'payment_request'; error?: string }
+
+async function loadOrder(eventId: string, orderId: number) {
   const [event, order] = await Promise.all([getEvent(eventId), getOrder(eventId, orderId)])
   if (!event || !order) throw new Error('Commande introuvable')
   if (order.cancelledAt) throw new Error('Cette commande est annulée')
-  if (!order.buyerEmail) {
-    await setEmailStatus(orderId, 'not_sent', 'Pas d’adresse e-mail')
-    return { status: 'not_sent', error: 'Pas d’adresse e-mail' }
-  }
+  return { event, order }
+}
 
+async function deliver(
+  orderId: number,
+  kind: EmailResult['kind'],
+  message: Parameters<typeof env.EMAIL.send>[0],
+): Promise<EmailResult> {
+  try {
+    await env.EMAIL.send(message)
+    await setEmailStatus(orderId, 'sent')
+    if (kind === 'tickets') await markTicketsSent(orderId)
+    return { status: 'sent', kind }
+  } catch (error) {
+    const text = describeError(error)
+    console.error(`Failed to email order #${orderId}:`, text)
+    await setEmailStatus(orderId, 'failed', text)
+    return { status: 'failed', kind, error: text }
+  }
+}
+
+export async function sendTicketEmail(eventId: string, orderId: number, baseUrl: string): Promise<EmailResult> {
+  const { event, order } = await loadOrder(eventId, orderId)
+  if (paymentStatus(order) !== 'paid') throw new Error('Le paiement n’est pas complet')
+  const [orderTickets, orderPayments] = await Promise.all([getOrderTickets(orderId), listPayments(orderId)])
   const tickets: (EmailTicket & { png: Uint8Array })[] = await Promise.all(
-    (await getOrderTickets(orderId)).map(async (t) => {
+    orderTickets.map(async (t) => {
       const url = await ticketUrl(baseUrl, t.id)
-      return { seq: t.seq, code: t.code, url, cid: `ticket-${t.code}`, png: await qrPng(url) }
+      return { seq: t.seq, code: t.code, typeName: t.typeName, url, cid: `ticket-${t.code}`, png: await qrPng(url) }
     }),
   )
-  const { html, text } = renderTicketEmail(event, order, tickets)
+  const { html, text } = renderTicketEmail(event, order, tickets, orderPayments)
+  return deliver(orderId, 'tickets', {
+    from: { email: env.EMAIL_FROM, name: event.name },
+    to: { email: order.buyerEmail, name: order.buyerName },
+    replyTo: event.contactEmail || undefined,
+    subject: ticketEmailSubject(event, order),
+    html,
+    text,
+    attachments: tickets.map((t) => ({
+      content: bytesToBase64(t.png),
+      filename: `billet-${t.seq}-${t.code}.png`,
+      type: 'image/png',
+      disposition: 'inline' as const,
+      contentId: t.cid,
+    })),
+  })
+}
 
-  try {
-    await env.EMAIL.send({
-      from: { email: env.EMAIL_FROM, name: event.name },
-      to: { email: order.buyerEmail, name: order.buyerName },
-      replyTo: event.contactEmail || undefined,
-      subject: ticketEmailSubject(event, order),
-      html,
-      text,
-      attachments: tickets.map((t) => ({
-        content: bytesToBase64(t.png),
-        filename: `billet-${t.seq}-${t.code}.png`,
-        type: 'image/png',
-        disposition: 'inline' as const,
-        contentId: t.cid,
-      })),
-    })
-    await setEmailStatus(orderId, 'sent')
-    return { status: 'sent' }
-  } catch (error) {
-    const message = describeError(error)
-    console.error(`Failed to email order #${orderId}:`, message)
-    await setEmailStatus(orderId, 'failed', message)
-    return { status: 'failed', error: message }
-  }
+export async function sendPaymentRequestEmail(eventId: string, orderId: number): Promise<EmailResult> {
+  const { event, order } = await loadOrder(eventId, orderId)
+  const orderTickets = await getOrderTickets(orderId)
+  const { html, text } = renderPaymentRequestEmail(
+    event,
+    order,
+    orderTickets.map((t) => t.typeName),
+    paymentReference(order.id),
+  )
+  return deliver(orderId, 'payment_request', {
+    from: { email: env.EMAIL_FROM, name: event.name },
+    to: { email: order.buyerEmail, name: order.buyerName },
+    replyTo: event.contactEmail || undefined,
+    subject: paymentRequestSubject(event),
+    html,
+    text,
+  })
+}
+
+export async function sendOrderEmail(eventId: string, orderId: number, baseUrl: string): Promise<EmailResult> {
+  const order = await getOrder(eventId, orderId)
+  if (!order) throw new Error('Commande introuvable')
+  return paymentStatus(order) === 'paid'
+    ? sendTicketEmail(eventId, orderId, baseUrl)
+    : sendPaymentRequestEmail(eventId, orderId)
 }
 
 export async function sendTestEmail(event: EventDetails, to: string): Promise<void> {

@@ -5,51 +5,73 @@ import { toast } from 'sonner'
 import { Form, PageHeader, SectionTitle, StickyBar } from '#/components/common'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { ButtonGroup } from '#/components/ui/button-group'
+import { ButtonGroup, ButtonGroupText } from '#/components/ui/button-group'
 import { Card, CardContent } from '#/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '#/components/ui/input-group'
+import { Separator } from '#/components/ui/separator'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
+import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
+import { listTicketTypesFn } from '#/functions/events.functions'
 import { createSaleFn } from '#/functions/orders.functions'
 import { currencySymbol, formatMoney, inputToMinor, minorToInput, plural } from '#/lib/format'
 import { errorMessage } from '#/lib/schemas'
+import type { PaymentMethod } from '#/lib/types'
 
 export const Route = createFileRoute('/_app/events/$eventId/_organizer/sell')({
+  loader: ({ params }) => listTicketTypesFn({ data: { eventId: params.eventId } }),
   head: () => ({ meta: [{ title: 'Vendre des billets' }] }),
   component: SellPage,
 })
 
 const EMPTY_BUYER = { buyerName: '', buyerEmail: '', buyerPhone: '', notes: '' }
+const MAX_TICKETS = 50
 
 function SellPage() {
   const { event } = Route.useRouteContext()
+  const types = Route.useLoaderData()
   const navigate = useNavigate()
   const [buyer, setBuyer] = useState(EMPTY_BUYER)
-  const [quantity, setQuantity] = useState(1)
-  const [amountInput, setAmountInput] = useState<string | null>(null)
+  const [counts, setCounts] = useState<Record<number, number>>(() => (types.length === 1 ? { [types[0].id]: 1 } : {}))
+  const [method, setMethod] = useState<PaymentMethod>('cash')
+  const [cashInput, setCashInput] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  const suggested = quantity * event.ticketPrice
-  const amountText = amountInput ?? minorToInput(suggested, event.currency)
-  const amount = inputToMinor(amountText, event.currency)
+  const money = (amount: number) => formatMoney(amount, event.currency)
+  const quantity = types.reduce((sum, type) => sum + (counts[type.id] ?? 0), 0)
+  const total = types.reduce((sum, type) => sum + (counts[type.id] ?? 0) * type.price, 0)
+  const cashText = cashInput ?? minorToInput(total, event.currency)
+  const cash = method === 'cash' ? inputToMinor(cashText, event.currency) : 0
+  const remaining = cash === null ? total : Math.max(total - cash, 0)
+  const paidNow = cash !== null && cash >= total
 
   function update(field: keyof typeof EMPTY_BUYER) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setBuyer((b) => ({ ...b, [field]: e.target.value }))
   }
 
-  function changeQuantity(next: number) {
-    setQuantity(Math.min(50, Math.max(1, next || 1)))
+  function setCount(typeId: number, next: number) {
+    const others = quantity - (counts[typeId] ?? 0)
+    setCounts((c) => ({ ...c, [typeId]: Math.max(0, Math.min(next, MAX_TICKETS - others)) }))
+    setCashInput(null)
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (amount === null) return
+    if (cash === null || quantity === 0) return
     setPending(true)
     try {
-      const { orderId } = await createSaleFn({ data: { eventId: event.id, ...buyer, quantity, amount } })
+      const { orderId } = await createSaleFn({
+        data: {
+          eventId: event.id,
+          ...buyer,
+          items: types.map((type) => ({ ticketTypeId: type.id, quantity: counts[type.id] ?? 0 })),
+          received: cash,
+          method,
+        },
+      })
       await navigate({
         to: '/events/$eventId/guests/$orderId',
         params: { eventId: event.id, orderId: String(orderId) },
@@ -61,12 +83,20 @@ function SellPage() {
     }
   }
 
+  const submitLabel =
+    quantity === 0
+      ? 'Choisissez des billets'
+      : cash === null
+        ? 'Saisissez le montant reçu'
+        : total === 0
+          ? `Valider · ${plural(quantity, 'billet gratuit', 'billets gratuits')}`
+          : paidNow
+            ? `Valider ${money(cash)} · ${plural(quantity, 'billet')}`
+            : `Valider · reste ${money(remaining)} par virement`
+
   return (
     <>
-      <PageHeader
-        title="Vendre des billets"
-        description="Encaissez, puis les billets partent par e-mail à l’acheteur."
-      />
+      <PageHeader title="Vendre des billets" description="Choisissez les billets, encaissez, et c’est envoyé." />
 
       {!event.startsAt && (
         <Alert className="mb-5">
@@ -114,7 +144,6 @@ function SellPage() {
                     value={buyer.buyerEmail}
                     onChange={update('buyerEmail')}
                   />
-                  <FieldDescription>Les billets avec QR code sont envoyés ici.</FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="buyer-phone">Téléphone (facultatif)</FieldLabel>
@@ -136,92 +165,137 @@ function SellPage() {
           <SectionTitle>Billets</SectionTitle>
           <Card>
             <CardContent>
-              <FieldGroup>
-                <Field orientation="horizontal">
-                  <FieldContent>
-                    <FieldLabel htmlFor="ticket-quantity">Quantité</FieldLabel>
-                    <FieldDescription>{formatMoney(event.ticketPrice, event.currency)} l’unité</FieldDescription>
-                  </FieldContent>
-                  <ButtonGroup>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label="Un billet de moins"
-                      disabled={quantity <= 1}
-                      onClick={() => changeQuantity(quantity - 1)}
-                    >
-                      <Minus />
-                    </Button>
-                    <Input
-                      id="ticket-quantity"
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      max={50}
-                      value={quantity}
-                      onChange={(e) => changeQuantity(Number(e.target.value))}
-                      className="w-14 [appearance:textfield] px-0 text-center text-base font-semibold tabular-nums [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label="Un billet de plus"
-                      disabled={quantity >= 50}
-                      onClick={() => changeQuantity(quantity + 1)}
-                    >
-                      <Plus />
-                    </Button>
-                  </ButtonGroup>
-                </Field>
-                <Field data-invalid={amount === null || undefined}>
-                  <FieldLabel htmlFor="cash-received">Espèces reçues</FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon>
-                      <InputGroupText>{currencySymbol(event.currency)}</InputGroupText>
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      id="cash-received"
-                      inputMode="decimal"
-                      aria-invalid={amount === null || undefined}
-                      value={amountText}
-                      onChange={(e) => setAmountInput(e.target.value)}
-                      className="tabular-nums"
-                    />
-                  </InputGroup>
-                  {amount === null ? (
-                    <FieldError>Saisissez un nombre, par exemple 20 ou 12,50</FieldError>
-                  ) : (
-                    amountInput !== null &&
-                    amount !== suggested && (
-                      <FieldDescription>
-                        <button type="button" className="underline" onClick={() => setAmountInput(null)}>
-                          Revenir à {formatMoney(suggested, event.currency)}
-                        </button>
-                      </FieldDescription>
-                    )
-                  )}
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="sale-notes">Notes (facultatif)</FieldLabel>
-                  <Textarea
-                    id="sale-notes"
-                    rows={2}
-                    placeholder="ex. a aussi payé pour ses parents"
-                    value={buyer.notes}
-                    onChange={update('notes')}
-                  />
-                </Field>
+              <FieldGroup className="gap-4">
+                {types.map((type) => {
+                  const count = counts[type.id] ?? 0
+                  return (
+                    <Field key={type.id} orientation="horizontal">
+                      <FieldContent>
+                        <FieldLabel>{type.name}</FieldLabel>
+                        <FieldDescription>{type.price === 0 ? 'Gratuit' : money(type.price)}</FieldDescription>
+                      </FieldContent>
+                      <ButtonGroup aria-label={`Nombre de billets ${type.name}`}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label={`Un billet ${type.name} de moins`}
+                          disabled={count === 0}
+                          onClick={() => setCount(type.id, count - 1)}
+                        >
+                          <Minus />
+                        </Button>
+                        <ButtonGroupText className="w-12 justify-center text-base font-semibold tabular-nums">
+                          {count}
+                        </ButtonGroupText>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label={`Un billet ${type.name} de plus`}
+                          disabled={quantity >= MAX_TICKETS}
+                          onClick={() => setCount(type.id, count + 1)}
+                        >
+                          <Plus />
+                        </Button>
+                      </ButtonGroup>
+                    </Field>
+                  )
+                })}
+                <Separator />
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[15px] font-medium">Total · {plural(quantity, 'billet')}</span>
+                  <span className="text-xl font-semibold tabular-nums">{money(total)}</span>
+                </div>
               </FieldGroup>
             </CardContent>
           </Card>
         </section>
 
+        {total > 0 && (
+          <section>
+            <SectionTitle>Paiement</SectionTitle>
+            <Card>
+              <CardContent>
+                <FieldGroup>
+                  <ToggleGroup
+                    aria-label="Mode de paiement"
+                    variant="outline"
+                    spacing={0}
+                    value={[method]}
+                    onValueChange={(value) => value[0] && setMethod(value[0] as PaymentMethod)}
+                  >
+                    <ToggleGroupItem value="cash">Espèces</ToggleGroupItem>
+                    <ToggleGroupItem value="transfer">Virement plus tard</ToggleGroupItem>
+                  </ToggleGroup>
+                  {method === 'cash' && (
+                    <Field data-invalid={cash === null || undefined}>
+                      <FieldLabel htmlFor="cash-received">Espèces reçues</FieldLabel>
+                      <InputGroup>
+                        <InputGroupAddon>
+                          <InputGroupText>{currencySymbol(event.currency)}</InputGroupText>
+                        </InputGroupAddon>
+                        <InputGroupInput
+                          id="cash-received"
+                          inputMode="decimal"
+                          aria-invalid={cash === null || undefined}
+                          value={cashText}
+                          onChange={(e) => setCashInput(e.target.value)}
+                          className="tabular-nums"
+                        />
+                      </InputGroup>
+                      {cash === null && <FieldError>Saisissez un nombre, par exemple 20 ou 12,50</FieldError>}
+                    </Field>
+                  )}
+                  <FieldDescription>
+                    {paidNow
+                      ? 'Payé : les billets partent tout de suite par e-mail.'
+                      : `L’acheteur reçoit une demande de virement de ${money(remaining)} avec une référence. Les billets partent dès que vous enregistrez le paiement.`}
+                  </FieldDescription>
+                  {!paidNow && !event.bankDetails && (
+                    <Alert>
+                      <Info />
+                      <AlertDescription>
+                        Ajoutez vos coordonnées bancaires dans{' '}
+                        <Link
+                          to="/events/$eventId/settings"
+                          params={{ eventId: event.id }}
+                          className="font-medium underline"
+                        >
+                          Réglages
+                        </Link>{' '}
+                        pour qu’elles figurent dans l’e-mail.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </FieldGroup>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        <section>
+          <SectionTitle>Notes</SectionTitle>
+          <Card>
+            <CardContent>
+              <Field>
+                <FieldLabel htmlFor="sale-notes" className="sr-only">
+                  Notes
+                </FieldLabel>
+                <Textarea
+                  id="sale-notes"
+                  rows={2}
+                  placeholder="Facultatif, ex. a aussi payé pour ses parents"
+                  value={buyer.notes}
+                  onChange={update('notes')}
+                />
+              </Field>
+            </CardContent>
+          </Card>
+        </section>
+
         <StickyBar aboveTabBar>
-          <Button type="submit" size="lg" className="w-full" disabled={pending || amount === null}>
+          <Button type="submit" size="lg" className="w-full" disabled={pending || cash === null || quantity === 0}>
             {pending && <Spinner />}
-            {amount === null
-              ? 'Saisissez le montant reçu'
-              : `Valider ${formatMoney(amount, event.currency)} · ${plural(quantity, 'billet')}`}
+            {submitLabel}
           </Button>
         </StickyBar>
       </Form>

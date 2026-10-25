@@ -11,7 +11,7 @@ export function Form({ className, children, ...props }: ComponentProps<'form'>) 
   const hydrated = useHydrated()
   return (
     <form {...props}>
-      <FieldSet disabled={!hydrated} className={className}>
+      <FieldSet disabled={!hydrated} className={cn('min-w-0', className)}>
         {children}
       </FieldSet>
     </form>

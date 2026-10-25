@@ -14,7 +14,7 @@ import {
   type SQL,
 } from 'drizzle-orm'
 import { alias, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
-import type { EventInput, SaleInput } from '#/lib/schemas'
+import type { EventInput, TicketTypeInput } from '#/lib/schemas'
 import type {
   CheckInResult,
   EmailStatus,
@@ -23,12 +23,15 @@ import type {
   EventMember,
   EventRole,
   OrderSummary,
+  Payment,
+  PaymentMethod,
   SalesStats,
   TicketSummary,
+  TicketType,
 } from '#/lib/types'
 import { randomCode, randomEventId, randomTicketId } from './crypto.server'
 import { db } from './db/client.server'
-import { eventMembers, events, orders, tickets, user } from './db/schema'
+import { eventMembers, events, orders, payments, tickets, ticketTypes, user } from './db/schema'
 
 const nowIso = () => new Date().toISOString()
 
@@ -38,16 +41,20 @@ function contains(column: AnySQLiteColumn, query: string): SQL {
 }
 
 function orderNumber(q: string) {
-  return /^#?\d+$/.test(q) ? Number(q.replace('#', '')) : -1
+  const match = /^(?:#|ct|n°\s*)?(\d+)$/i.exec(q.trim())
+  return match ? Number(match[1]) : -1
 }
 
 const isActiveOrder = isNull(orders.cancelledAt)
+
+const paidSql = sql<number>`(SELECT coalesce(sum(${payments.amount}), 0) FROM ${payments} WHERE ${payments.orderId} = ${orders.id})`
+const isFullyPaid = sql`${paidSql} >= ${orders.amount}`
 
 function activeOrderOf(orderId: AnySQLiteColumn, eventId: string) {
   return db
     .select({ id: orders.id })
     .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.eventId, eventId), isActiveOrder))
+    .where(and(eq(orders.id, orderId), eq(orders.eventId, eventId), isActiveOrder, isFullyPaid))
 }
 
 function ordersOf(eventId: string) {
@@ -60,17 +67,22 @@ const eventFields = {
   startsAt: events.startsAt,
   venue: events.venue,
   info: events.info,
-  ticketPrice: events.ticketPrice,
   currency: events.currency,
   contactEmail: events.contactEmail,
+  bankDetails: events.bankDetails,
 }
 
-export async function createEvent(input: EventInput, userId: string): Promise<string> {
+export async function createEvent(input: EventInput, types: TicketTypeInput[], userId: string): Promise<string> {
   const id = randomEventId()
   const createdAt = nowIso()
   await db.batch([
     db.insert(events).values({ id, ...input, createdBy: userId, createdAt }),
     db.insert(eventMembers).values({ eventId: id, userId, role: 'organizer', createdAt }),
+    db
+      .insert(ticketTypes)
+      .values(
+        types.map((type, position) => ({ eventId: id, name: type.name, price: type.price, position, createdAt })),
+      ),
   ])
   return id
 }
@@ -106,6 +118,58 @@ export async function listEventsForUser(userId: string, isAdmin: boolean): Promi
   return (isAdmin ? query.leftJoin(eventMembers, membership) : query.innerJoin(eventMembers, membership))
     .orderBy(asc(events.startsAt), desc(events.createdAt))
     .limit(500)
+}
+
+export async function listTicketTypes(eventId: string): Promise<TicketType[]> {
+  const sold = db
+    .select({ n: count() })
+    .from(tickets)
+    .innerJoin(orders, eq(orders.id, tickets.orderId))
+    .where(and(eq(tickets.ticketTypeId, ticketTypes.id), isActiveOrder))
+  return db
+    .select({
+      id: ticketTypes.id,
+      name: ticketTypes.name,
+      price: ticketTypes.price,
+      sold: sql<number>`(${sold})`.mapWith(Number),
+    })
+    .from(ticketTypes)
+    .where(and(eq(ticketTypes.eventId, eventId), isNull(ticketTypes.archivedAt)))
+    .orderBy(asc(ticketTypes.position), asc(ticketTypes.id))
+}
+
+export async function saveTicketTypes(eventId: string, inputs: TicketTypeInput[]) {
+  const existing = await db
+    .select({
+      id: ticketTypes.id,
+      used: sql<number>`(SELECT count(*) FROM ${tickets} WHERE ${tickets.ticketTypeId} = ${ticketTypes.id})`.mapWith(
+        Number,
+      ),
+    })
+    .from(ticketTypes)
+    .where(eq(ticketTypes.eventId, eventId))
+  const known = new Map(existing.map((type) => [type.id, type]))
+  const kept = new Set(inputs.flatMap((input) => (input.id && known.has(input.id) ? [input.id] : [])))
+  const now = nowIso()
+  const statements = [
+    ...inputs.map((input, position) =>
+      input.id && known.has(input.id)
+        ? db
+            .update(ticketTypes)
+            .set({ name: input.name, price: input.price, position, archivedAt: null })
+            .where(eq(ticketTypes.id, input.id))
+        : db.insert(ticketTypes).values({ eventId, name: input.name, price: input.price, position, createdAt: now }),
+    ),
+    ...existing
+      .filter((type) => !kept.has(type.id))
+      .map((type) =>
+        type.used > 0
+          ? db.update(ticketTypes).set({ archivedAt: now }).where(eq(ticketTypes.id, type.id))
+          : db.delete(ticketTypes).where(eq(ticketTypes.id, type.id)),
+      ),
+  ]
+  const [first, ...rest] = statements
+  if (first) await db.batch([first, ...rest])
 }
 
 export async function getMemberRole(eventId: string, userId: string): Promise<EventRole | null> {
@@ -149,39 +213,56 @@ export async function findUserByEmail(email: string) {
 
 const orderFields = {
   ...getColumns(orders),
+  paid: paidSql.mapWith(Number),
   checkedIn: db.$count(tickets, and(eq(tickets.orderId, orders.id), isNotNull(tickets.checkedInAt))),
 }
 
-export async function createOrder(eventId: string, input: SaleInput, currency: string): Promise<number> {
+export type SaleLine = { ticketTypeId: number; quantity: number }
+
+export type NewOrder = {
+  buyer: { buyerName: string; buyerEmail: string; buyerPhone: string; notes: string }
+  lines: SaleLine[]
+  total: number
+  currency: string
+  payment: { amount: number; method: PaymentMethod; recordedBy: string } | null
+}
+
+export async function createOrder(eventId: string, order: NewOrder): Promise<number> {
   const createdAt = nowIso()
+  const quantity = order.lines.reduce((sum, line) => sum + line.quantity, 0)
+  const lastOrderId = sql`(SELECT MAX(${orders.id}) FROM ${orders})`
   for (let attempt = 0; ; attempt++) {
+    const seats = order.lines.flatMap((line) => Array.from({ length: line.quantity }, () => line.ticketTypeId))
     const insertOrder = db
       .insert(orders)
-      .values({
-        eventId,
-        buyerName: input.buyerName,
-        buyerEmail: input.buyerEmail,
-        buyerPhone: input.buyerPhone,
-        quantity: input.quantity,
-        amount: input.amount,
-        currency,
-        notes: input.notes,
-        createdAt,
-      })
+      .values({ eventId, ...order.buyer, quantity, amount: order.total, currency: order.currency, createdAt })
       .returning({ id: orders.id })
     const insertTickets = db.insert(tickets).values(
-      Array.from({ length: input.quantity }, (_, i) => ({
+      seats.map((ticketTypeId, i) => ({
         id: randomTicketId(),
         code: randomCode(),
         // Safe: a D1 batch is one transaction, so MAX(id) is the order inserted just above.
-        orderId: sql`(SELECT MAX(${orders.id}) FROM ${orders})`,
+        orderId: lastOrderId,
+        ticketTypeId,
         seq: i + 1,
         createdAt,
       })),
     )
     try {
-      const [[order]] = await db.batch([insertOrder, insertTickets])
-      return order.id
+      const [[created]] = order.payment
+        ? await db.batch([
+            insertOrder,
+            insertTickets,
+            db.insert(payments).values({
+              orderId: lastOrderId,
+              amount: order.payment.amount,
+              method: order.payment.method,
+              receivedAt: createdAt,
+              recordedBy: order.payment.recordedBy,
+            }),
+          ])
+        : await db.batch([insertOrder, insertTickets])
+      return created.id
     } catch (error) {
       if (attempt >= 3 || !isUniqueViolation(error)) throw error
     }
@@ -248,17 +329,63 @@ export async function setEmailStatus(id: number, status: EmailStatus, error = ''
     .where(eq(orders.id, id))
 }
 
+export async function markTicketsSent(id: number) {
+  await db.update(orders).set({ ticketsSentAt: nowIso() }).where(eq(orders.id, id))
+}
+
+export function listPayments(orderId: number): Promise<Payment[]> {
+  return db
+    .select({
+      id: payments.id,
+      amount: payments.amount,
+      method: payments.method,
+      note: payments.note,
+      receivedAt: payments.receivedAt,
+      recordedBy: payments.recordedBy,
+    })
+    .from(payments)
+    .where(eq(payments.orderId, orderId))
+    .orderBy(asc(payments.receivedAt), asc(payments.id))
+}
+
+export async function addPayment(
+  orderId: number,
+  payment: { amount: number; method: PaymentMethod; note: string; recordedBy: string },
+) {
+  await db.insert(payments).values({ orderId, ...payment, receivedAt: nowIso() })
+}
+
+export async function deletePayment(eventId: string, paymentId: number): Promise<number | null> {
+  const [deleted] = await db
+    .delete(payments)
+    .where(and(eq(payments.id, paymentId), inArray(payments.orderId, ordersOf(eventId))))
+    .returning({ orderId: payments.orderId })
+  return deleted?.orderId ?? null
+}
+
 export async function getStats(eventId: string): Promise<SalesStats> {
   const [[totals], checkedIn] = await Promise.all([
     db
       .select({
         orders: count(),
         ticketsSold: sql<number>`coalesce(sum(${orders.quantity}), 0)`.mapWith(Number),
-        revenue: sql<number>`coalesce(sum(${orders.amount}), 0)`.mapWith(Number),
+        revenue: sql<number>`coalesce(sum(${paidSql}), 0)`.mapWith(Number),
+        outstanding: sql<number>`coalesce(sum(max(${orders.amount} - ${paidSql}, 0)), 0)`.mapWith(Number),
       })
       .from(orders)
       .where(and(eq(orders.eventId, eventId), isActiveOrder)),
-    db.$count(tickets, and(isNotNull(tickets.checkedInAt), exists(activeOrderOf(tickets.orderId, eventId)))),
+    db.$count(
+      tickets,
+      and(
+        isNotNull(tickets.checkedInAt),
+        exists(
+          db
+            .select({ id: orders.id })
+            .from(orders)
+            .where(and(eq(orders.id, tickets.orderId), eq(orders.eventId, eventId), isActiveOrder)),
+        ),
+      ),
+    ),
   ])
   return { ...totals, checkedIn }
 }
@@ -273,9 +400,11 @@ const ticketFields = {
   orderId: tickets.orderId,
   quantity: orders.quantity,
   buyerName: orders.buyerName,
+  typeName: sql<string>`coalesce(${ticketTypes.name}, '')`,
   checkedInAt: tickets.checkedInAt,
   checkedInBy: tickets.checkedInBy,
   cancelled: sql<boolean>`${orders.cancelledAt} IS NOT NULL`.mapWith(Boolean),
+  paid: sql<boolean>`${isFullyPaid}`.mapWith(Boolean),
   orderCheckedIn: sql<number>`(${db
     .select({ n: count() })
     .from(sibling)
@@ -283,7 +412,12 @@ const ticketFields = {
 }
 
 function selectTickets(where: SQL | undefined) {
-  return db.select(ticketFields).from(tickets).innerJoin(orders, eq(orders.id, tickets.orderId)).where(where)
+  return db
+    .select(ticketFields)
+    .from(tickets)
+    .innerJoin(orders, eq(orders.id, tickets.orderId))
+    .leftJoin(ticketTypes, eq(ticketTypes.id, tickets.ticketTypeId))
+    .where(where)
 }
 
 export async function getTicket(id: string): Promise<TicketSummary | null> {
@@ -330,6 +464,15 @@ export async function checkInTicket(eventId: string, ticketId: string, by: strin
   if (ticket.eventId !== eventId) return { status: 'invalid', reason: 'Ce billet est pour un autre événement.' }
   if (updated.length === 1) return { status: 'checked_in', ticket }
   if (ticket.cancelled) return { status: 'cancelled', ticket }
+  if (!ticket.paid && !ticket.checkedInAt) {
+    const order = await getOrder(eventId, ticket.orderId)
+    return {
+      status: 'unpaid',
+      ticket,
+      remaining: order ? Math.max(order.amount - order.paid, 0) : 0,
+      currency: order?.currency ?? 'EUR',
+    }
+  }
   return { status: 'already_checked_in', ticket }
 }
 
@@ -353,17 +496,26 @@ export async function undoCheckIn(eventId: string, ticketId: string): Promise<bo
   return updated.length === 1
 }
 
-export type ExportRow = OrderSummary & { ticketCodes: string[] }
+export type ExportRow = OrderSummary & { ticketCodes: string[]; ticketTypes: string[] }
 
 export async function exportOrders(eventId: string): Promise<ExportRow[]> {
   const rows = await db.query.orders.findMany({
     where: { eventId },
     orderBy: { id: 'asc' },
-    with: { tickets: { columns: { code: true, checkedInAt: true }, orderBy: { seq: 'asc' } } },
+    with: {
+      tickets: {
+        columns: { code: true, checkedInAt: true },
+        orderBy: { seq: 'asc' },
+        with: { ticketType: { columns: { name: true } } },
+      },
+      payments: { columns: { amount: true } },
+    },
   })
-  return rows.map(({ tickets: orderTickets, ...order }) => ({
+  return rows.map(({ tickets: orderTickets, payments: orderPayments, ...order }) => ({
     ...order,
+    paid: orderPayments.reduce((sum, payment) => sum + payment.amount, 0),
     checkedIn: orderTickets.filter((t) => t.checkedInAt).length,
     ticketCodes: orderTickets.map((t) => t.code),
+    ticketTypes: orderTickets.map((t) => t.ticketType?.name ?? ''),
   }))
 }

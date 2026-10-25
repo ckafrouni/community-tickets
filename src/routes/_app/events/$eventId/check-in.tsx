@@ -18,7 +18,7 @@ import {
   searchTicketsFn,
   undoCheckInFn,
 } from '#/functions/check-in.functions'
-import { formatCode, plural } from '#/lib/format'
+import { formatCode, formatMoney, plural } from '#/lib/format'
 import { errorMessage } from '#/lib/schemas'
 import { extractToken } from '#/lib/token'
 import type { CheckInResult, TicketSummary } from '#/lib/types'
@@ -143,6 +143,7 @@ function CheckInPage() {
                 <ItemContent className="min-w-0">
                   <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
                   <ItemDescription>
+                    {t.typeName ? `${t.typeName} · ` : ''}
                     {t.seq} sur {t.quantity} · {formatCode(t.code)}
                   </ItemDescription>
                 </ItemContent>
@@ -218,6 +219,12 @@ function ScanResultOverlay({
           </>
         )
         break
+      case 'unpaid':
+        tone = 'bg-red-600'
+        icon = <X className="size-7" strokeWidth={3} />
+        title = 'Paiement en attente : ne pas faire entrer'
+        detail = `Reste ${formatMoney(result.remaining, result.currency)} à payer. Voyez avec un organisateur.`
+        break
       case 'cancelled':
         tone = 'bg-red-600'
         icon = <X className="size-7" strokeWidth={3} />
@@ -242,7 +249,7 @@ function ScanResultOverlay({
           <>
             <p className="line-clamp-2 font-heading text-3xl leading-tight font-bold break-words">{ticket.buyerName}</p>
             <p className="text-sm opacity-90">
-              Billet {ticket.seq} sur {ticket.quantity} · {formatCode(ticket.code)}
+              {ticket.typeName || 'Billet'} · {ticket.seq} sur {ticket.quantity} · {formatCode(ticket.code)}
             </p>
           </>
         )}
@@ -380,12 +387,15 @@ function ManualLookup({
               <ItemContent className="min-w-0">
                 <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
                 <ItemDescription>
+                  {t.typeName ? `${t.typeName} · ` : ''}
                   {t.seq} sur {t.quantity} · {formatCode(t.code)}
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
                 {t.cancelled ? (
                   <Badge variant="destructive">Annulé</Badge>
+                ) : !t.paid ? (
+                  <Badge variant="warning">À payer</Badge>
                 ) : (
                   <Button
                     variant={t.checkedInAt ? 'secondary' : 'default'}

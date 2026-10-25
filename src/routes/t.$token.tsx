@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { Check, MapPin, TicketX } from 'lucide-react'
+import { Check, Lock, MapPin, TicketX } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { DateTile, EventCover, IconTile, LocalTime, QrImage } from '#/components/common'
@@ -79,6 +79,8 @@ function TicketPage() {
         <CardContent className="flex flex-col items-center gap-3 text-center">
           {ticket.cancelled ? (
             <Badge variant="destructive">Annulé</Badge>
+          ) : !ticket.paid ? (
+            <Badge variant="warning">Paiement en attente</Badge>
           ) : ticket.checkedInAt ? (
             <Badge variant="secondary">Check-in fait</Badge>
           ) : (
@@ -86,20 +88,29 @@ function TicketPage() {
               <Check /> Billet valable
             </Badge>
           )}
-          <div className={ticket.cancelled ? 'w-full opacity-20' : 'w-full'}>
-            <QrImage svg={qrSvg} label={`QR code du billet ${code}`} className="mx-auto max-w-64" />
-          </div>
+          {qrSvg ? (
+            <div className={ticket.cancelled ? 'w-full opacity-20' : 'w-full'}>
+              <QrImage svg={qrSvg} label={`QR code du billet ${code}`} className="mx-auto max-w-64" />
+            </div>
+          ) : (
+            <div className="flex aspect-square w-full max-w-64 flex-col items-center justify-center gap-2 rounded-3xl bg-muted text-sm text-muted-foreground">
+              <Lock className="size-6" />
+              QR code disponible après paiement
+            </div>
+          )}
           <p className="font-mono text-xl font-semibold tracking-widest">{code}</p>
           <div className="w-full border-t border-dashed pt-4">
             <p className="text-lg font-semibold break-words">{ticket.buyerName}</p>
             <p className="text-sm text-muted-foreground">
-              {ticket.quantity > 1 ? `Billet ${ticket.seq} sur ${ticket.quantity} · ` : ''}Commande n° {ticket.orderId}{' '}
-              · Payé
+              {ticket.typeName || 'Billet'}
+              {ticket.quantity > 1 ? ` · ${ticket.seq} sur ${ticket.quantity}` : ''} · Commande n° {ticket.orderId}
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
             {ticket.cancelled ? (
               'Ce billet a été annulé.'
+            ) : !ticket.paid ? (
+              'Le billet sera valable dès réception du paiement.'
             ) : ticket.checkedInAt ? (
               <>
                 Scanné à l’entrée <LocalTime iso={ticket.checkedInAt} mode="ago" />.
