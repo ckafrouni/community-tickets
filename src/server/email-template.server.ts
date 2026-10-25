@@ -29,7 +29,19 @@ function button(label: string, url: string): string {
   return `<a href="${esc(url)}" style="display:inline-block;background:${INK};color:#ffffff;padding:13px 22px;border-radius:10px;text-decoration:none;font:600 15px/1 ${FONT}">${esc(label)}</a>`
 }
 
-function layout({ title, preheader, body }: { title: string; preheader: string; body: string }): string {
+export const APP_NAME = 'Community Tickets'
+
+function layout({
+  title,
+  preheader,
+  body,
+  reason,
+}: {
+  title: string
+  preheader: string
+  body: string
+  reason?: string
+}): string {
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(title)}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f5">
@@ -38,7 +50,7 @@ function layout({ title, preheader, body }: { title: string; preheader: string; 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:20px;border:1px solid #e4e4e7">
 ${body}
 </table>
-<p style="margin:16px 0 0;font:12px/1.5 ${FONT};color:#a1a1aa">Envoyé par Community Tickets</p>
+<p style="margin:16px 0 0;max-width:480px;font:12px/1.5 ${FONT};color:#a1a1aa">${reason ? `${esc(reason)}<br>` : ''}Envoyé par ${APP_NAME}</p>
 </td></tr></table>
 </body></html>`
 }
@@ -72,7 +84,20 @@ export function renderActionEmail({
   <p style="margin:24px 0 0;font:13px/1.5 ${FONT};color:${MUTED}">${esc(note)}</p>
 </td></tr>`,
   })
-  const text = [title, '', greeting, '', ...lines, '', `${action.label}: ${action.url}`, '', note].join('\n')
+  const text = [
+    title,
+    '',
+    greeting,
+    '',
+    ...lines,
+    '',
+    `${action.label} : ${action.url}`,
+    '',
+    note,
+    '',
+    '—',
+    `Envoyé par ${APP_NAME}`,
+  ].join('\n')
   return { html, text }
 }
 
@@ -110,6 +135,10 @@ function infoBox(title: string, rows: [string, string, boolean?][]) {
         .join('')}
     </table>
   </td></tr>`
+}
+
+function orderReason(event: EventDetails) {
+  return `Vous recevez cet e-mail car une réservation à votre nom a été enregistrée par l’équipe de ${event.name}.`
 }
 
 function footer(event: EventDetails) {
@@ -163,6 +192,7 @@ export function renderTicketEmail(
 
   const html = layout({
     title: subject,
+    reason: orderReason(event),
     preheader: `${many ? `Vos ${tickets.length} billets` : 'Votre billet'} pour ${event.name}. Présentez le QR code à l’entrée.`,
     body: `<tr><td style="padding:32px 28px 20px;font:16px/1.6 ${FONT};color:${INK}">
     ${eventHeader(event, `C’est confirmé${name ? `, ${name}` : ''} !`, '#059669')}
@@ -190,13 +220,17 @@ export function renderTicketEmail(
     ...receipt.map(([label, value]) => `${label} : ${value}`),
     ...(event.info ? ['', event.info] : []),
     ...(event.contactEmail ? ['', `Une question ? Écrivez à ${event.contactEmail}`] : []),
+    '',
+    '—',
+    orderReason(event),
+    `Envoyé par ${APP_NAME}`,
   ].join('\n')
 
   return { html, text }
 }
 
 export function paymentRequestSubject(event: EventDetails): string {
-  return `Paiement de vos billets pour ${event.name}`
+  return `Votre réservation pour ${event.name}`
 }
 
 export function renderPaymentRequestEmail(
@@ -227,10 +261,12 @@ export function renderPaymentRequestEmail(
 
   const html = layout({
     title: paymentRequestSubject(event),
-    preheader: `Reste à payer : ${money(remaining)}. Indiquez la référence ${reference} dans votre virement.`,
+    reason: orderReason(event),
+    preheader: `Réservation enregistrée. Il reste ${money(remaining)} à régler par virement, référence ${reference}.`,
     body: `<tr><td style="padding:32px 28px 20px;font:16px/1.6 ${FONT};color:${INK}">
     ${eventHeader(event, `Merci${name ? `, ${name}` : ''} ! Votre réservation est enregistrée.`, '#b45309')}
-    <p style="margin:20px 0 0">Pour la confirmer, faites un virement de <strong>${esc(money(remaining))}</strong> en indiquant la référence <strong>${esc(reference)}</strong>. Vos billets avec QR code vous seront envoyés par e-mail dès réception du paiement.</p>
+    <p style="margin:20px 0 0">Il reste <strong>${esc(money(remaining))}</strong> à régler par virement. Indiquez la référence <strong>${esc(reference)}</strong> dans le libellé pour que l’équipe retrouve votre paiement. Vos billets avec QR code arrivent par e-mail dès sa réception.</p>
+    <p style="margin:12px 0 0;font:14px/1.6 ${FONT};color:${MUTED}">Un doute sur ces coordonnées ? Contactez l’équipe de l’événement avant de payer.</p>
   </td></tr>
   ${infoBox('Récapitulatif', rows)}
   ${bank}
@@ -243,13 +279,18 @@ export function renderPaymentRequestEmail(
     '',
     `Merci${name ? `, ${name}` : ''} ! Votre réservation est enregistrée.`,
     '',
-    `Pour la confirmer, faites un virement de ${money(remaining)} en indiquant la référence ${reference}.`,
-    'Vos billets avec QR code vous seront envoyés par e-mail dès réception du paiement.',
+    `Il reste ${money(remaining)} à régler par virement. Indiquez la référence ${reference} dans le libellé pour que l’équipe retrouve votre paiement.`,
+    'Vos billets avec QR code arrivent par e-mail dès sa réception.',
+    'Un doute sur ces coordonnées ? Contactez l’équipe de l’événement avant de payer.',
     '',
     ...rows.map(([label, value]) => `${label} : ${value}`),
     ...(event.bankDetails ? ['', 'Coordonnées bancaires', event.bankDetails] : []),
     ...(event.info ? ['', event.info] : []),
     ...(event.contactEmail ? ['', `Une question ? Écrivez à ${event.contactEmail}`] : []),
+    '',
+    '—',
+    orderReason(event),
+    `Envoyé par ${APP_NAME}`,
   ].join('\n')
 
   return { html, text }

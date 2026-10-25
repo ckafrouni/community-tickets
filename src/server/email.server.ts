@@ -3,6 +3,7 @@ import { paymentReference, paymentStatus } from '#/lib/payments'
 import type { EmailStatus, EventDetails, EventRole } from '#/lib/types'
 import { bytesToBase64 } from './crypto.server'
 import {
+  APP_NAME,
   paymentRequestSubject,
   renderActionEmail,
   renderPaymentRequestEmail,
@@ -21,8 +22,6 @@ import {
   setEmailStatus,
 } from './repo.server'
 import { ticketUrl } from './tickets.server'
-
-const APP_NAME = 'Community Tickets'
 
 export const INVITE_PARAM = 'invite'
 
@@ -86,7 +85,7 @@ export async function sendTicketEmail(eventId: string, orderId: number, baseUrl:
   )
   const { html, text } = renderTicketEmail(event, order, tickets, orderPayments)
   return deliver(orderId, 'tickets', {
-    from: { email: env.EMAIL_FROM, name: event.name },
+    from: { email: env.EMAIL_FROM, name: APP_NAME },
     to: { email: order.buyerEmail, name: order.buyerName },
     replyTo: event.contactEmail || undefined,
     subject: ticketEmailSubject(event, order),
@@ -112,7 +111,7 @@ export async function sendPaymentRequestEmail(eventId: string, orderId: number):
     paymentReference(order.id),
   )
   return deliver(orderId, 'payment_request', {
-    from: { email: env.EMAIL_FROM, name: event.name },
+    from: { email: env.EMAIL_FROM, name: APP_NAME },
     to: { email: order.buyerEmail, name: order.buyerName },
     replyTo: event.contactEmail || undefined,
     subject: paymentRequestSubject(event),
@@ -131,11 +130,11 @@ export async function sendOrderEmail(eventId: string, orderId: number, baseUrl: 
 
 export async function sendTestEmail(event: EventDetails, to: string): Promise<void> {
   await env.EMAIL.send({
-    from: { email: env.EMAIL_FROM, name: event.name },
+    from: { email: env.EMAIL_FROM, name: APP_NAME },
     to,
     replyTo: event.contactEmail || undefined,
     subject: `E-mail de test pour ${event.name}`,
-    text: `L’envoi d’e-mails fonctionne. Les acheteurs de ${event.name} recevront leurs billets depuis cette adresse.`,
+    text: `L’envoi d’e-mails fonctionne. Les acheteurs de ${event.name} recevront leurs billets depuis cette adresse.\n\n—\nEnvoyé par ${APP_NAME}`,
   })
 }
 
