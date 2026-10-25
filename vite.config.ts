@@ -6,7 +6,7 @@ import { defineConfig, lazyPlugins } from 'vite-plus'
 
 const GENERATED_FILES = ['src/routeTree.gen.ts', 'migrations/**', 'src/server/db/auth-schema.ts']
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   staged: {
     '*': 'vp check --fix',
   },
@@ -24,13 +24,17 @@ export default defineConfig({
   },
   resolve: { tsconfigPaths: true },
   server: {
-    port: 3000,
+    port: mode === 'e2e' ? 3100 : 3000,
+    strictPort: true,
     fs: { deny: ['.env', '.env.*', '.dev.vars*', '.cloudflare/**', '*.{crt,pem}', '**/.git/**'] },
   },
   plugins: lazyPlugins(() => [
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    cloudflare({
+      viteEnvironment: { name: 'ssr' },
+      persistState: mode === 'e2e' ? { path: '.cloudflare/e2e' } : true,
+    }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
   ]),
-})
+}))

@@ -27,6 +27,18 @@ export function formatMoney(minor: number, currency: string): string {
   }
 }
 
+export function currencySymbol(currency: string): string {
+  try {
+    return (
+      new Intl.NumberFormat(LOCALE, { style: 'currency', currency, currencyDisplay: 'narrowSymbol' })
+        .formatToParts(0)
+        .find((part) => part.type === 'currency')?.value ?? currency
+    )
+  } catch {
+    return currency
+  }
+}
+
 export function minorToInput(minor: number, currency: string): string {
   const digits = currencyDigits(currency)
   return (minor / 10 ** digits).toFixed(digits)
@@ -53,6 +65,29 @@ export function normalizeCode(input: string): string {
 
 export function plural(n: number, singular: string, pluralForm = `${singular}s`) {
   return `${n} ${n === 1 ? singular : pluralForm}`
+}
+
+export type EventWhen = { month: string; day: string; date: string; time: string }
+
+export function parseEventDate(value: string): EventWhen | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return null
+  const [, year, month, day, hour, minute] = match.map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute))
+  if (date.getUTCMonth() !== month - 1) return null
+  const format = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(LOCALE, { timeZone: 'UTC', ...options }).format(date)
+  return {
+    month: format({ month: 'short' }).toUpperCase(),
+    day: format({ day: 'numeric' }),
+    date: format({ weekday: 'long', month: 'long', day: 'numeric' }),
+    time: format({ hour: 'numeric', minute: '2-digit' }),
+  }
+}
+
+export function describeEventDate(value: string): string {
+  const when = parseEventDate(value)
+  return when ? `${when.date} · ${when.time}` : value
 }
 
 export function formatDateTime(iso: string): string {

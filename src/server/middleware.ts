@@ -1,23 +1,13 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { setResponseHeader, setResponseStatus } from '@tanstack/react-start/server'
-import { getStaffSession } from './auth/auth.server'
+import { getSessionUser } from './auth/auth.server'
 
-export const staffMiddleware = createMiddleware({ type: 'function' }).server(async ({ next }) => {
-  const session = await getStaffSession()
-  if (!session) {
+export const authMiddleware = createMiddleware({ type: 'function' }).server(async ({ next }) => {
+  const user = await getSessionUser()
+  if (!user) {
     setResponseStatus(401)
     throw new Error('Your session has expired. Please sign in again.')
   }
   setResponseHeader('Cache-Control', 'no-store')
-  return next({ context: { session } })
+  return next({ context: { user } })
 })
-
-export const adminMiddleware = createMiddleware({ type: 'function' })
-  .middleware([staffMiddleware])
-  .server(async ({ next, context }) => {
-    if (context.session.role !== 'admin') {
-      setResponseStatus(403)
-      throw new Error('Only organizers can do this.')
-    }
-    return next()
-  })

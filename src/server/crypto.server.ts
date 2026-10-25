@@ -30,6 +30,10 @@ export function randomCode(length = 8): string {
   return Array.from(randomBytes(length), (b) => CROCKFORD[b & 31]).join('')
 }
 
+export function randomEventId(): string {
+  return randomCode(12).toLowerCase()
+}
+
 export function randomToken(): string {
   return base64url(randomBytes(32))
 }

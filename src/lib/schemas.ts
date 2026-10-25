@@ -1,33 +1,39 @@
 import { z } from 'zod'
-import { isValidCurrency } from './format'
+import { isValidCurrency, parseEventDate } from './format'
 
 const optionalEmail = z
   .string()
   .trim()
+  .toLowerCase()
   .max(200)
   .refine((v) => v === '' || z.email().safeParse(v).success, 'Enter a valid email address')
 
-export const eventSettingsSchema = z.object({
-  eventName: z.string().trim().min(1, 'Event name is required').max(120),
-  eventDate: z.string().trim().max(120),
-  eventVenue: z.string().trim().max(200),
-  eventInfo: z.string().trim().max(2000),
+export const eventSchema = z.object({
+  name: z.string().trim().min(1, 'Event name is required').max(120),
+  startsAt: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || parseEventDate(v) !== null, 'Pick a date and time'),
+  venue: z.string().trim().max(200),
+  info: z.string().trim().max(2000),
   ticketPrice: z.number().int().min(0).max(100_000_000),
   currency: z.string().trim().toUpperCase().refine(isValidCurrency, 'Use a 3-letter currency code like USD or EUR'),
   contactEmail: optionalEmail,
 })
 
-export type EventSettings = z.infer<typeof eventSettingsSchema>
+export type EventInput = z.infer<typeof eventSchema>
 
-export const DEFAULT_SETTINGS: EventSettings = {
-  eventName: 'Community Event',
-  eventDate: '',
-  eventVenue: '',
-  eventInfo: '',
+export const NEW_EVENT: EventInput = {
+  name: '',
+  startsAt: '',
+  venue: '',
+  info: '',
   ticketPrice: 1000,
   currency: 'USD',
   contactEmail: '',
 }
+
+export const eventIdSchema = z.object({ eventId: z.string().min(1).max(32) })
 
 export const buyerSchema = z.object({
   buyerName: z.string().trim().min(1, 'Name is required').max(120),
@@ -43,6 +49,12 @@ export const saleSchema = buyerSchema.extend({
 })
 
 export type SaleInput = z.infer<typeof saleSchema>
+
+export const memberSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(120),
+  email: z.email('Enter a valid email address').trim().toLowerCase(),
+  role: z.enum(['host', 'door']),
+})
 
 export function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)

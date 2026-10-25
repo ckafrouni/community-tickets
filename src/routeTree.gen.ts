@@ -10,28 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StaffRouteImport } from './routes/_staff'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as StaffAdminRouteImport } from './routes/_staff/_admin'
-import { Route as StaffDoorRouteImport } from './routes/_staff/door'
-import { Route as ApiOrdersDotcsvRouteImport } from './routes/api/orders[.]csv'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TTokenRouteImport } from './routes/t.$token'
-import { Route as StaffAdminSellRouteImport } from './routes/_staff/_admin/sell'
-import { Route as StaffAdminSettingsRouteImport } from './routes/_staff/_admin/settings'
-import { Route as StaffAdminStaffRouteImport } from './routes/_staff/_admin/staff'
+import { Route as AppEventsIndexRouteImport } from './routes/_app/events/index'
+import { Route as AppEventsEventIdRouteImport } from './routes/_app/events/$eventId'
+import { Route as AppEventsNewRouteImport } from './routes/_app/events/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as StaffAdminOrdersIndexRouteImport } from './routes/_staff/_admin/orders/index'
-import { Route as StaffAdminOrdersOrderIdRouteImport } from './routes/_staff/_admin/orders/$orderId'
+import { Route as AppEventsEventIdIndexRouteImport } from './routes/_app/events/$eventId/index'
+import { Route as AppEventsEventIdHostRouteImport } from './routes/_app/events/$eventId/_host'
+import { Route as AppEventsEventIdCheckInRouteImport } from './routes/_app/events/$eventId/check-in'
+import { Route as ApiEventsEventIdGuestsDotcsvRouteImport } from './routes/api/events/$eventId/guests[.]csv'
+import { Route as AppEventsEventIdHostSellRouteImport } from './routes/_app/events/$eventId/_host/sell'
+import { Route as AppEventsEventIdHostSettingsRouteImport } from './routes/_app/events/$eventId/_host/settings'
+import { Route as AppEventsEventIdHostTeamRouteImport } from './routes/_app/events/$eventId/_host/team'
+import { Route as AppEventsEventIdHostGuestsIndexRouteImport } from './routes/_app/events/$eventId/_host/guests/index'
+import { Route as AppEventsEventIdHostGuestsOrderIdRouteImport } from './routes/_app/events/$eventId/_host/guests/$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffRoute = StaffRouteImport.update({
-  id: '/_staff',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -49,18 +54,9 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffAdminRoute = StaffAdminRouteImport.update({
-  id: '/_admin',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffDoorRoute = StaffDoorRouteImport.update({
-  id: '/door',
-  path: '/door',
-  getParentRoute: () => StaffRoute,
-} as any)
-const ApiOrdersDotcsvRoute = ApiOrdersDotcsvRouteImport.update({
-  id: '/api/orders.csv',
-  path: '/api/orders.csv',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TTokenRoute = TTokenRouteImport.update({
@@ -68,84 +64,138 @@ const TTokenRoute = TTokenRouteImport.update({
   path: '/t/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffAdminSellRoute = StaffAdminSellRouteImport.update({
-  id: '/sell',
-  path: '/sell',
-  getParentRoute: () => StaffAdminRoute,
+const AppEventsIndexRoute = AppEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => AppRoute,
 } as any)
-const StaffAdminSettingsRoute = StaffAdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => StaffAdminRoute,
+const AppEventsEventIdRoute = AppEventsEventIdRouteImport.update({
+  id: '/events/$eventId',
+  path: '/events/$eventId',
+  getParentRoute: () => AppRoute,
 } as any)
-const StaffAdminStaffRoute = StaffAdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => StaffAdminRoute,
+const AppEventsNewRoute = AppEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffAdminOrdersIndexRoute = StaffAdminOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
-  getParentRoute: () => StaffAdminRoute,
+const AppEventsEventIdIndexRoute = AppEventsEventIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppEventsEventIdRoute,
 } as any)
-const StaffAdminOrdersOrderIdRoute = StaffAdminOrdersOrderIdRouteImport.update({
-  id: '/orders/$orderId',
-  path: '/orders/$orderId',
-  getParentRoute: () => StaffAdminRoute,
+const AppEventsEventIdHostRoute = AppEventsEventIdHostRouteImport.update({
+  id: '/_host',
+  getParentRoute: () => AppEventsEventIdRoute,
 } as any)
+const AppEventsEventIdCheckInRoute = AppEventsEventIdCheckInRouteImport.update({
+  id: '/check-in',
+  path: '/check-in',
+  getParentRoute: () => AppEventsEventIdRoute,
+} as any)
+const ApiEventsEventIdGuestsDotcsvRoute =
+  ApiEventsEventIdGuestsDotcsvRouteImport.update({
+    id: '/api/events/$eventId/guests.csv',
+    path: '/api/events/$eventId/guests.csv',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppEventsEventIdHostSellRoute =
+  AppEventsEventIdHostSellRouteImport.update({
+    id: '/sell',
+    path: '/sell',
+    getParentRoute: () => AppEventsEventIdHostRoute,
+  } as any)
+const AppEventsEventIdHostSettingsRoute =
+  AppEventsEventIdHostSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AppEventsEventIdHostRoute,
+  } as any)
+const AppEventsEventIdHostTeamRoute =
+  AppEventsEventIdHostTeamRouteImport.update({
+    id: '/team',
+    path: '/team',
+    getParentRoute: () => AppEventsEventIdHostRoute,
+  } as any)
+const AppEventsEventIdHostGuestsIndexRoute =
+  AppEventsEventIdHostGuestsIndexRouteImport.update({
+    id: '/guests/',
+    path: '/guests/',
+    getParentRoute: () => AppEventsEventIdHostRoute,
+  } as any)
+const AppEventsEventIdHostGuestsOrderIdRoute =
+  AppEventsEventIdHostGuestsOrderIdRouteImport.update({
+    id: '/guests/$orderId',
+    path: '/guests/$orderId',
+    getParentRoute: () => AppEventsEventIdHostRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/door': typeof StaffDoorRoute
-  '/api/orders.csv': typeof ApiOrdersDotcsvRoute
+  '/signup': typeof SignupRoute
   '/t/$token': typeof TTokenRoute
-  '/sell': typeof StaffAdminSellRoute
-  '/settings': typeof StaffAdminSettingsRoute
-  '/staff': typeof StaffAdminStaffRoute
+  '/events/$eventId': typeof AppEventsEventIdRouteWithChildren
+  '/events/new': typeof AppEventsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/orders/$orderId': typeof StaffAdminOrdersOrderIdRoute
-  '/orders/': typeof StaffAdminOrdersIndexRoute
+  '/events/': typeof AppEventsIndexRoute
+  '/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
+  '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
+  '/events/$eventId/': typeof AppEventsEventIdIndexRoute
+  '/events/$eventId/sell': typeof AppEventsEventIdHostSellRoute
+  '/events/$eventId/settings': typeof AppEventsEventIdHostSettingsRoute
+  '/events/$eventId/team': typeof AppEventsEventIdHostTeamRoute
+  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
+  '/events/$eventId/guests/': typeof AppEventsEventIdHostGuestsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/door': typeof StaffDoorRoute
-  '/api/orders.csv': typeof ApiOrdersDotcsvRoute
+  '/signup': typeof SignupRoute
   '/t/$token': typeof TTokenRoute
-  '/sell': typeof StaffAdminSellRoute
-  '/settings': typeof StaffAdminSettingsRoute
-  '/staff': typeof StaffAdminStaffRoute
+  '/events/new': typeof AppEventsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/orders/$orderId': typeof StaffAdminOrdersOrderIdRoute
-  '/orders': typeof StaffAdminOrdersIndexRoute
+  '/events': typeof AppEventsIndexRoute
+  '/events/$eventId': typeof AppEventsEventIdIndexRoute
+  '/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
+  '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
+  '/events/$eventId/sell': typeof AppEventsEventIdHostSellRoute
+  '/events/$eventId/settings': typeof AppEventsEventIdHostSettingsRoute
+  '/events/$eventId/team': typeof AppEventsEventIdHostTeamRoute
+  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
+  '/events/$eventId/guests': typeof AppEventsEventIdHostGuestsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_staff': typeof StaffRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_staff/_admin': typeof StaffAdminRouteWithChildren
-  '/_staff/door': typeof StaffDoorRoute
-  '/api/orders.csv': typeof ApiOrdersDotcsvRoute
+  '/signup': typeof SignupRoute
   '/t/$token': typeof TTokenRoute
-  '/_staff/_admin/sell': typeof StaffAdminSellRoute
-  '/_staff/_admin/settings': typeof StaffAdminSettingsRoute
-  '/_staff/_admin/staff': typeof StaffAdminStaffRoute
+  '/_app/events/$eventId': typeof AppEventsEventIdRouteWithChildren
+  '/_app/events/new': typeof AppEventsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/_staff/_admin/orders/$orderId': typeof StaffAdminOrdersOrderIdRoute
-  '/_staff/_admin/orders/': typeof StaffAdminOrdersIndexRoute
+  '/_app/events/': typeof AppEventsIndexRoute
+  '/_app/events/$eventId/_host': typeof AppEventsEventIdHostRouteWithChildren
+  '/_app/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
+  '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
+  '/_app/events/$eventId/': typeof AppEventsEventIdIndexRoute
+  '/_app/events/$eventId/_host/sell': typeof AppEventsEventIdHostSellRoute
+  '/_app/events/$eventId/_host/settings': typeof AppEventsEventIdHostSettingsRoute
+  '/_app/events/$eventId/_host/team': typeof AppEventsEventIdHostTeamRoute
+  '/_app/events/$eventId/_host/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
+  '/_app/events/$eventId/_host/guests/': typeof AppEventsEventIdHostGuestsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,58 +204,73 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/reset-password'
-    | '/door'
-    | '/api/orders.csv'
+    | '/signup'
     | '/t/$token'
-    | '/sell'
-    | '/settings'
-    | '/staff'
+    | '/events/$eventId'
+    | '/events/new'
     | '/api/auth/$'
-    | '/orders/$orderId'
-    | '/orders/'
+    | '/events/'
+    | '/events/$eventId/check-in'
+    | '/api/events/$eventId/guests.csv'
+    | '/events/$eventId/'
+    | '/events/$eventId/sell'
+    | '/events/$eventId/settings'
+    | '/events/$eventId/team'
+    | '/events/$eventId/guests/$orderId'
+    | '/events/$eventId/guests/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
-    | '/door'
-    | '/api/orders.csv'
+    | '/signup'
     | '/t/$token'
-    | '/sell'
-    | '/settings'
-    | '/staff'
+    | '/events/new'
     | '/api/auth/$'
-    | '/orders/$orderId'
-    | '/orders'
+    | '/events'
+    | '/events/$eventId'
+    | '/events/$eventId/check-in'
+    | '/api/events/$eventId/guests.csv'
+    | '/events/$eventId/sell'
+    | '/events/$eventId/settings'
+    | '/events/$eventId/team'
+    | '/events/$eventId/guests/$orderId'
+    | '/events/$eventId/guests'
   id:
     | '__root__'
     | '/'
-    | '/_staff'
+    | '/_app'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
-    | '/_staff/_admin'
-    | '/_staff/door'
-    | '/api/orders.csv'
+    | '/signup'
     | '/t/$token'
-    | '/_staff/_admin/sell'
-    | '/_staff/_admin/settings'
-    | '/_staff/_admin/staff'
+    | '/_app/events/$eventId'
+    | '/_app/events/new'
     | '/api/auth/$'
-    | '/_staff/_admin/orders/$orderId'
-    | '/_staff/_admin/orders/'
+    | '/_app/events/'
+    | '/_app/events/$eventId/_host'
+    | '/_app/events/$eventId/check-in'
+    | '/api/events/$eventId/guests.csv'
+    | '/_app/events/$eventId/'
+    | '/_app/events/$eventId/_host/sell'
+    | '/_app/events/$eventId/_host/settings'
+    | '/_app/events/$eventId/_host/team'
+    | '/_app/events/$eventId/_host/guests/$orderId'
+    | '/_app/events/$eventId/_host/guests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  StaffRoute: typeof StaffRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  ApiOrdersDotcsvRoute: typeof ApiOrdersDotcsvRoute
+  SignupRoute: typeof SignupRoute
   TTokenRoute: typeof TTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiEventsEventIdGuestsDotcsvRoute: typeof ApiEventsEventIdGuestsDotcsvRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -217,11 +282,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_staff': {
-      id: '/_staff'
+    '/_app': {
+      id: '/_app'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof StaffRouteImport
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -245,25 +310,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_staff/_admin': {
-      id: '/_staff/_admin'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof StaffAdminRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/door': {
-      id: '/_staff/door'
-      path: '/door'
-      fullPath: '/door'
-      preLoaderRoute: typeof StaffDoorRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/api/orders.csv': {
-      id: '/api/orders.csv'
-      path: '/api/orders.csv'
-      fullPath: '/api/orders.csv'
-      preLoaderRoute: typeof ApiOrdersDotcsvRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/t/$token': {
@@ -273,26 +324,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_staff/_admin/sell': {
-      id: '/_staff/_admin/sell'
-      path: '/sell'
-      fullPath: '/sell'
-      preLoaderRoute: typeof StaffAdminSellRouteImport
-      parentRoute: typeof StaffAdminRoute
+    '/_app/events/': {
+      id: '/_app/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof AppEventsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_staff/_admin/settings': {
-      id: '/_staff/_admin/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof StaffAdminSettingsRouteImport
-      parentRoute: typeof StaffAdminRoute
+    '/_app/events/$eventId': {
+      id: '/_app/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof AppEventsEventIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_staff/_admin/staff': {
-      id: '/_staff/_admin/staff'
-      path: '/staff'
-      fullPath: '/staff'
-      preLoaderRoute: typeof StaffAdminStaffRouteImport
-      parentRoute: typeof StaffAdminRoute
+    '/_app/events/new': {
+      id: '/_app/events/new'
+      path: '/events/new'
+      fullPath: '/events/new'
+      preLoaderRoute: typeof AppEventsNewRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -301,64 +352,131 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_staff/_admin/orders/': {
-      id: '/_staff/_admin/orders/'
-      path: '/orders'
-      fullPath: '/orders/'
-      preLoaderRoute: typeof StaffAdminOrdersIndexRouteImport
-      parentRoute: typeof StaffAdminRoute
+    '/_app/events/$eventId/': {
+      id: '/_app/events/$eventId/'
+      path: '/'
+      fullPath: '/events/$eventId/'
+      preLoaderRoute: typeof AppEventsEventIdIndexRouteImport
+      parentRoute: typeof AppEventsEventIdRoute
     }
-    '/_staff/_admin/orders/$orderId': {
-      id: '/_staff/_admin/orders/$orderId'
-      path: '/orders/$orderId'
-      fullPath: '/orders/$orderId'
-      preLoaderRoute: typeof StaffAdminOrdersOrderIdRouteImport
-      parentRoute: typeof StaffAdminRoute
+    '/_app/events/$eventId/_host': {
+      id: '/_app/events/$eventId/_host'
+      path: ''
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof AppEventsEventIdHostRouteImport
+      parentRoute: typeof AppEventsEventIdRoute
+    }
+    '/_app/events/$eventId/check-in': {
+      id: '/_app/events/$eventId/check-in'
+      path: '/check-in'
+      fullPath: '/events/$eventId/check-in'
+      preLoaderRoute: typeof AppEventsEventIdCheckInRouteImport
+      parentRoute: typeof AppEventsEventIdRoute
+    }
+    '/api/events/$eventId/guests.csv': {
+      id: '/api/events/$eventId/guests.csv'
+      path: '/api/events/$eventId/guests.csv'
+      fullPath: '/api/events/$eventId/guests.csv'
+      preLoaderRoute: typeof ApiEventsEventIdGuestsDotcsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/events/$eventId/_host/sell': {
+      id: '/_app/events/$eventId/_host/sell'
+      path: '/sell'
+      fullPath: '/events/$eventId/sell'
+      preLoaderRoute: typeof AppEventsEventIdHostSellRouteImport
+      parentRoute: typeof AppEventsEventIdHostRoute
+    }
+    '/_app/events/$eventId/_host/settings': {
+      id: '/_app/events/$eventId/_host/settings'
+      path: '/settings'
+      fullPath: '/events/$eventId/settings'
+      preLoaderRoute: typeof AppEventsEventIdHostSettingsRouteImport
+      parentRoute: typeof AppEventsEventIdHostRoute
+    }
+    '/_app/events/$eventId/_host/team': {
+      id: '/_app/events/$eventId/_host/team'
+      path: '/team'
+      fullPath: '/events/$eventId/team'
+      preLoaderRoute: typeof AppEventsEventIdHostTeamRouteImport
+      parentRoute: typeof AppEventsEventIdHostRoute
+    }
+    '/_app/events/$eventId/_host/guests/': {
+      id: '/_app/events/$eventId/_host/guests/'
+      path: '/guests'
+      fullPath: '/events/$eventId/guests/'
+      preLoaderRoute: typeof AppEventsEventIdHostGuestsIndexRouteImport
+      parentRoute: typeof AppEventsEventIdHostRoute
+    }
+    '/_app/events/$eventId/_host/guests/$orderId': {
+      id: '/_app/events/$eventId/_host/guests/$orderId'
+      path: '/guests/$orderId'
+      fullPath: '/events/$eventId/guests/$orderId'
+      preLoaderRoute: typeof AppEventsEventIdHostGuestsOrderIdRouteImport
+      parentRoute: typeof AppEventsEventIdHostRoute
     }
   }
 }
 
-interface StaffAdminRouteChildren {
-  StaffAdminSellRoute: typeof StaffAdminSellRoute
-  StaffAdminSettingsRoute: typeof StaffAdminSettingsRoute
-  StaffAdminStaffRoute: typeof StaffAdminStaffRoute
-  StaffAdminOrdersOrderIdRoute: typeof StaffAdminOrdersOrderIdRoute
-  StaffAdminOrdersIndexRoute: typeof StaffAdminOrdersIndexRoute
+interface AppEventsEventIdHostRouteChildren {
+  AppEventsEventIdHostSellRoute: typeof AppEventsEventIdHostSellRoute
+  AppEventsEventIdHostSettingsRoute: typeof AppEventsEventIdHostSettingsRoute
+  AppEventsEventIdHostTeamRoute: typeof AppEventsEventIdHostTeamRoute
+  AppEventsEventIdHostGuestsOrderIdRoute: typeof AppEventsEventIdHostGuestsOrderIdRoute
+  AppEventsEventIdHostGuestsIndexRoute: typeof AppEventsEventIdHostGuestsIndexRoute
 }
 
-const StaffAdminRouteChildren: StaffAdminRouteChildren = {
-  StaffAdminSellRoute: StaffAdminSellRoute,
-  StaffAdminSettingsRoute: StaffAdminSettingsRoute,
-  StaffAdminStaffRoute: StaffAdminStaffRoute,
-  StaffAdminOrdersOrderIdRoute: StaffAdminOrdersOrderIdRoute,
-  StaffAdminOrdersIndexRoute: StaffAdminOrdersIndexRoute,
+const AppEventsEventIdHostRouteChildren: AppEventsEventIdHostRouteChildren = {
+  AppEventsEventIdHostSellRoute: AppEventsEventIdHostSellRoute,
+  AppEventsEventIdHostSettingsRoute: AppEventsEventIdHostSettingsRoute,
+  AppEventsEventIdHostTeamRoute: AppEventsEventIdHostTeamRoute,
+  AppEventsEventIdHostGuestsOrderIdRoute:
+    AppEventsEventIdHostGuestsOrderIdRoute,
+  AppEventsEventIdHostGuestsIndexRoute: AppEventsEventIdHostGuestsIndexRoute,
 }
 
-const StaffAdminRouteWithChildren = StaffAdminRoute._addFileChildren(
-  StaffAdminRouteChildren,
-)
+const AppEventsEventIdHostRouteWithChildren =
+  AppEventsEventIdHostRoute._addFileChildren(AppEventsEventIdHostRouteChildren)
 
-interface StaffRouteChildren {
-  StaffAdminRoute: typeof StaffAdminRouteWithChildren
-  StaffDoorRoute: typeof StaffDoorRoute
+interface AppEventsEventIdRouteChildren {
+  AppEventsEventIdHostRoute: typeof AppEventsEventIdHostRouteWithChildren
+  AppEventsEventIdCheckInRoute: typeof AppEventsEventIdCheckInRoute
+  AppEventsEventIdIndexRoute: typeof AppEventsEventIdIndexRoute
 }
 
-const StaffRouteChildren: StaffRouteChildren = {
-  StaffAdminRoute: StaffAdminRouteWithChildren,
-  StaffDoorRoute: StaffDoorRoute,
+const AppEventsEventIdRouteChildren: AppEventsEventIdRouteChildren = {
+  AppEventsEventIdHostRoute: AppEventsEventIdHostRouteWithChildren,
+  AppEventsEventIdCheckInRoute: AppEventsEventIdCheckInRoute,
+  AppEventsEventIdIndexRoute: AppEventsEventIdIndexRoute,
 }
 
-const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
+const AppEventsEventIdRouteWithChildren =
+  AppEventsEventIdRoute._addFileChildren(AppEventsEventIdRouteChildren)
+
+interface AppRouteChildren {
+  AppEventsEventIdRoute: typeof AppEventsEventIdRouteWithChildren
+  AppEventsNewRoute: typeof AppEventsNewRoute
+  AppEventsIndexRoute: typeof AppEventsIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppEventsEventIdRoute: AppEventsEventIdRouteWithChildren,
+  AppEventsNewRoute: AppEventsNewRoute,
+  AppEventsIndexRoute: AppEventsIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  StaffRoute: StaffRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  ApiOrdersDotcsvRoute: ApiOrdersDotcsvRoute,
+  SignupRoute: SignupRoute,
   TTokenRoute: TTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiEventsEventIdGuestsDotcsvRoute: ApiEventsEventIdGuestsDotcsvRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

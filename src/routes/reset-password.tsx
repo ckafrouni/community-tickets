@@ -1,8 +1,9 @@
 import { Link, createFileRoute, useNavigate, useHydrated } from '@tanstack/react-router'
 import { useState } from 'react'
-import { AuthCard } from '#/components/AuthCard'
+import { AuthCard, authLinkClass } from '#/components/AuthCard'
 import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
 import { authClient } from '#/lib/auth-client'
+import { formText } from '#/lib/form'
 
 const MIN_LENGTH = 10
 
@@ -18,28 +19,32 @@ export const Route = createFileRoute('/reset-password')({
 function ResetPasswordPage() {
   const { token, error: linkError } = Route.useSearch()
   const navigate = useNavigate()
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
   const hydrated = useHydrated()
 
   if (!token || linkError) {
     return (
-      <AuthCard title="Link expired" subtitle="Choose a password">
-        <Alert tone="red">This link is invalid or has expired. Request a new one.</Alert>
-        <p className="mt-4 text-center text-sm">
-          <Link to="/forgot-password" className="font-medium text-indigo-600 hover:underline">
-            Send me a new link
-          </Link>
-        </p>
+      <AuthCard
+        title="This link has expired"
+        footer={
+          <p>
+            <Link to="/forgot-password" className={authLinkClass}>
+              Send me a new link
+            </Link>
+          </p>
+        }
+      >
+        <Alert tone="red">The link is invalid or older than 24 hours. Request a new one.</Alert>
       </AuthCard>
     )
   }
 
-  async function onSubmit(event: React.FormEvent) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (password !== confirm) {
+    const form = new FormData(event.currentTarget)
+    const password = formText(form, 'password')
+    if (password !== formText(form, 'confirm')) {
       setError("The passwords don't match.")
       return
     }
@@ -55,28 +60,13 @@ function ResetPasswordPage() {
   }
 
   return (
-    <AuthCard title="Choose a password" subtitle={`At least ${MIN_LENGTH} characters`}>
+    <AuthCard title="Choose a password" subtitle={`At least ${MIN_LENGTH} characters.`}>
       <form method="post" onSubmit={onSubmit} className="space-y-4">
         <Field label="New password">
-          <Input
-            type="password"
-            autoComplete="new-password"
-            minLength={MIN_LENGTH}
-            autoFocus
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <Input type="password" name="password" autoComplete="new-password" minLength={MIN_LENGTH} required />
         </Field>
         <Field label="Confirm password" error={error}>
-          <Input
-            type="password"
-            autoComplete="new-password"
-            minLength={MIN_LENGTH}
-            required
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
+          <Input type="password" name="confirm" autoComplete="new-password" minLength={MIN_LENGTH} required />
         </Field>
         <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
           {pending && <Spinner />} Save password

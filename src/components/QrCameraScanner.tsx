@@ -1,4 +1,5 @@
 import type QrScanner from 'qr-scanner'
+import { Camera, CameraOff, Flashlight, FlashlightOff, ScanLine, SwitchCamera } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Spinner } from './ui'
 
@@ -102,24 +103,24 @@ export function QrCameraScanner({
 
   return (
     <div>
-      <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-xl bg-slate-900">
+      <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-3xl bg-zinc-900">
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
         {state !== 'running' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-slate-200">
-            {state === 'error' ? (
-              <p className="text-sm">{error}</p>
-            ) : (
-              <p className="text-sm">Point the camera at the QR code on the ticket.</p>
-            )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-zinc-300">
+            <ScanLine className="size-10 text-zinc-500" strokeWidth={1.5} />
+            <p className="max-w-60 text-[15px]">
+              {state === 'error' ? error : 'Point the camera at the QR code on the ticket.'}
+            </p>
             <Button
               size="lg"
+              className="!bg-white !text-zinc-900"
               onClick={() => {
                 onStart?.()
                 void start()
               }}
               disabled={state === 'starting'}
             >
-              {state === 'starting' && <Spinner />}
+              {state === 'starting' ? <Spinner /> : <Camera className="size-5" />}
               {state === 'error' ? 'Try again' : 'Start scanning'}
             </Button>
           </div>
@@ -127,18 +128,30 @@ export function QrCameraScanner({
         {children}
       </div>
       {state === 'running' && (
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
-          <Button variant="secondary" size="sm" onClick={stop}>
-            Stop camera
+        <div className="mt-3 flex justify-center gap-3">
+          <Button variant="soft" size="icon" onClick={stop} aria-label="Stop camera" title="Stop camera">
+            <CameraOff className="size-5" />
           </Button>
           {cameras.length > 1 && (
-            <Button variant="secondary" size="sm" onClick={() => void switchCamera()}>
-              Switch camera
+            <Button
+              variant="soft"
+              size="icon"
+              onClick={() => void switchCamera()}
+              aria-label="Switch camera"
+              title="Switch camera"
+            >
+              <SwitchCamera className="size-5" />
             </Button>
           )}
           {hasFlash && (
-            <Button variant="secondary" size="sm" onClick={() => void toggleFlash()}>
-              {flashOn ? 'Flashlight off' : 'Flashlight on'}
+            <Button
+              variant={flashOn ? 'primary' : 'soft'}
+              size="icon"
+              onClick={() => void toggleFlash()}
+              aria-label={flashOn ? 'Turn flashlight off' : 'Turn flashlight on'}
+              aria-pressed={flashOn}
+            >
+              {flashOn ? <FlashlightOff className="size-5" /> : <Flashlight className="size-5" />}
             </Button>
           )}
         </div>

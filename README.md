@@ -1,7 +1,7 @@
 # Community Tickets
 
-Sell tickets for cash at a community event, email each buyer QR-code tickets, and check people in at the door by
-scanning them.
+Run community events from your phone: sell tickets for cash, email each buyer QR-code tickets, and check people in at
+the door by scanning them. Mobile-first, in the spirit of Luma.
 
 Live at **https://tickets.otterware.app**. Runs entirely on Cloudflare.
 
@@ -18,23 +18,26 @@ Live at **https://tickets.otterware.app**. Runs entirely on Cloudflare.
 
 ## What it does
 
+- **Your events**: anyone can create an account (email + password, confirmed by email) and create events. Signing in
+  shows the events you run, split into Upcoming and Past. Buyers never need an account.
 - **Sell**: take the cash, type the buyer's name and email, pick the number of tickets. The amount is pre-filled from
-  the ticket price and can be changed.
+  the event's ticket price and can be changed.
 - **Email tickets**: each buyer gets one QR code per ticket (inline images), a link to view each ticket online, and a
   receipt. No email? Show the QR on screen or share the link.
-- **Track buyers**: searchable orders with totals, CSV export, edit, resend, cancel/refund.
-- **Check in at the door**: scan with any phone. Green, amber or red screens with a beep; "Admit 3 more" for groups; a
-  search box for codes that won't scan. Each ticket gets in once, even with several phones scanning.
-- **Staff**: organizers invite door volunteers (scan-only) or other organizers on the Staff page. Everyone sets their own
-  password through an emailed link.
+- **Guests**: searchable list per event with arrival status, CSV export, edit, resend, cancel/refund.
+- **Check in**: scan with any phone. Green, amber or red screens with a beep; "Admit 3 more" for groups; a search box for
+  codes that won't scan. Each ticket gets in once, even with several phones scanning, and only at its own event.
+- **Team**: each event has hosts (everything) and door staff (check-in only), invited by email from the event's
+  settings. New people choose their password through the invite link.
+
+The UI is designed for phones first: a bottom tab bar inside each event, sticky primary actions within thumb reach,
+44 px touch targets, and sheets instead of dialogs.
 
 ## Signing in
 
-`ADMIN_EMAIL` (in `cloudflare.config.ts`) is the organizer account. It is created automatically the first time anyone
-opens the sign-in page, without a usable password. To get in, open **First time here, or forgot your password?**,
-enter that email, and follow the link to choose a password. The same flow works for anyone an organizer invites.
-
-There is no public sign-up.
+Create an account at `/signup` and confirm your email. `ADMIN_EMAIL` (in `cloudflare.config.ts`) is the platform admin:
+it is created automatically without a usable password, can open every event, and gets in through **Forgot your
+password?** like anyone else.
 
 ## How tickets are protected
 
@@ -42,8 +45,9 @@ There is no public sign-up.
   `TICKET_SECRET`, a Worker secret. Codes cannot be forged or guessed.
 - Scanning verifies the signature, then D1: the ticket must exist, its order must not be cancelled, and it must not be
   checked in yet. Check-in is a single conditional `UPDATE`, so a copied or forwarded QR gets in at most once.
-- Every organizer and door action is checked on the server (Better Auth session plus role). Door staff cannot sell,
-  cancel, export, change settings or manage staff.
+- Every action is checked on the server against the caller's role on that event (Better Auth session plus the
+  `event_members` table). Door staff cannot sell, cancel, export, edit the event or manage the team, and nobody can read
+  or check in another event's guests.
 - Server functions reject cross-site requests (TanStack Start CSRF middleware). Ticket links are kept out of `Referer`
   headers.
 
@@ -66,6 +70,7 @@ the dev server output and saved under `.cloudflare/tmp/email/`, including the se
 | `vp dev`                   | Dev server                                                          |
 | `vp check`                 | Format, lint (type-aware) and type-check                            |
 | `vp test`                  | Tests in `workerd` against a fresh D1 (`@cloudflare/vitest-plugin`) |
+| `npm run e2e`              | Mobile end-to-end tests: iPhone (WebKit) and Android (Chromium)     |
 | `npm run typecheck`        | Regenerates Worker types from `cloudflare.config.ts`, then `tsc`    |
 | `vp build`                 | Production build into `.cloudflare/output/v0`                       |
 | `npm run db:generate`      | Generate a migration from `src/server/db/schema.ts` (drizzle-kit)   |
@@ -73,6 +78,14 @@ the dev server output and saved under `.cloudflare/tmp/email/`, including the se
 | `npm run auth:generate`    | Regenerate Better Auth's tables after changing its plugins          |
 
 A pre-commit hook runs `vp check --fix` on staged files.
+
+### Mobile end-to-end tests
+
+`npm run e2e` starts a separate dev server on port 3100 (`vp dev --mode e2e`) with its own fresh local D1 under
+`.cloudflare/e2e`, then drives the whole organizer flow on an iPhone 15 and a Pixel 7 profile: sign up and confirm the
+email, create an event, sell, check in, open the emailed ticket signed out, invite door staff and confirm they only see
+check-in. It also fails on sideways scrolling and touch targets under 44 px. Screenshots of every screen land in
+`.playwright/results/`. First run: `npx playwright install chromium webkit`.
 
 ### Changing the database
 
@@ -98,6 +111,8 @@ One-time setup, already done for this account:
 
 - D1 database `community-tickets`.
 - Email Sending enabled for `otterware.app` (records under `cf-bounce.otterware.app`).
+- Workers Builds connected to `ckafrouni/community-tickets` (production trigger on `main`, its own least-privilege
+  build token).
 - Worker secrets `BETTER_AUTH_SECRET` and `TICKET_SECRET` (`cf workers secrets list --worker community-tickets`).
   They persist across deploys. Rotating `TICKET_SECRET` invalidates every ticket already issued.
 
@@ -109,12 +124,15 @@ vite.config.ts            Vite+ config: plugins, fmt, lint, staged
 migrations/               D1 migrations generated by drizzle-kit
 src/
   routes/                 pages and server routes (TanStack Router file routes)
+    _app/events/          your events, create, and each event's Sell, Guests, Check in, Settings, Team
+    t.$token.tsx          public ticket page
     api/auth/$.ts         Better Auth handler
-  functions/              server functions, each guarded by auth middleware
+  functions/              server functions, each checking the caller's role on the event
   server/                 server-only code
     auth/                 Better Auth instance and options
     db/                   Drizzle schema, relations, D1 client
   lib/                    shared helpers, roles, validation
   start.ts                CSRF and security-header middleware
 tests/                    Vitest suites run inside workerd
+e2e/                      Playwright mobile end-to-end tests
 ```

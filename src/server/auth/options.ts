@@ -6,12 +6,12 @@ export const authOptions = {
   appName: 'Community Tickets',
   emailAndPassword: {
     enabled: true,
-    disableSignUp: true,
+    requireEmailVerification: true,
     minPasswordLength: 10,
     revokeSessionsOnPasswordReset: true,
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7,
+    expiresIn: 60 * 60 * 24 * 30,
   },
-  plugins: [admin({ ac, roles, defaultRole: 'door' })],
+  plugins: [admin({ ac, roles, defaultRole: 'user' })],
 } satisfies BetterAuthOptions

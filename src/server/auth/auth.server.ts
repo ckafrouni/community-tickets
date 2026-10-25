@@ -4,14 +4,21 @@ import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { env, waitUntil } from 'cloudflare:workers'
-import { parseRole, type Role } from '#/lib/permissions'
 import { randomToken } from '../crypto.server'
 import { db } from '../db/client.server'
 import * as schema from '../db/schema'
-import { sendPasswordLinkEmail } from '../email.server'
+import { sendPasswordEmail, sendVerificationEmail } from '../email.server'
 import { authOptions } from './options'
 
-const RATE_LIMITED_PATHS = new Set(['/sign-in/email', '/request-password-reset', '/reset-password'])
+const DAY = 60 * 60 * 24
+
+const RATE_LIMITED_PATHS = new Set([
+  '/sign-in/email',
+  '/sign-up/email',
+  '/request-password-reset',
+  '/reset-password',
+  '/send-verification-email',
+])
 
 export const auth = betterAuth({
   ...authOptions,
@@ -20,8 +27,15 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
   emailAndPassword: {
     ...authOptions.emailAndPassword,
-    resetPasswordTokenExpiresIn: 60 * 60 * 24,
-    sendResetPassword: ({ user, url }) => sendPasswordLinkEmail({ to: user.email, name: user.name, url }),
+    resetPasswordTokenExpiresIn: DAY,
+    sendResetPassword: sendPasswordEmail,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: DAY,
+    sendVerificationEmail,
   },
   advanced: {
     ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
@@ -42,16 +56,16 @@ export const auth = betterAuth({
   plugins: [...authOptions.plugins, tanstackStartCookies()],
 })
 
-export type StaffSession = { userId: string; name: string; email: string; role: Role }
+export type SessionUser = { id: string; name: string; email: string; isAdmin: boolean }
 
-export async function getStaffSession(): Promise<StaffSession | null> {
+export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
-  const role = parseRole(session?.user.role)
-  if (!session || !role || session.user.banned) return null
-  return { userId: session.user.id, name: session.user.name, email: session.user.email, role }
+  if (!session || session.user.banned) return null
+  const { id, name, email, role } = session.user
+  return { id, name, email, isAdmin: role === 'admin' }
 }
 
-function nameFromEmail(email: string) {
+export function nameFromEmail(email: string) {
   return email
     .split('@')[0]
     .split(/[._-]+/)
@@ -60,20 +74,25 @@ function nameFromEmail(email: string) {
     .join(' ')
 }
 
+export async function createUserWithoutPassword(input: { email: string; name: string; role?: 'admin' | 'user' }) {
+  const { user } = await auth.api.createUser({
+    body: {
+      email: input.email,
+      name: input.name,
+      role: input.role ?? 'user',
+      password: randomToken(),
+      data: { emailVerified: true },
+    },
+  })
+  return user
+}
+
 export async function ensureDefaultAdmin() {
   const email = env.ADMIN_EMAIL.toLowerCase()
   const existing = await db.query.user.findFirst({ columns: { id: true }, where: { email } })
   if (existing) return
   try {
-    await auth.api.createUser({
-      body: {
-        email,
-        name: nameFromEmail(email),
-        role: 'admin',
-        password: randomToken(),
-        data: { emailVerified: true },
-      },
-    })
+    await createUserWithoutPassword({ email, name: nameFromEmail(email), role: 'admin' })
   } catch (error) {
     if (!(await db.query.user.findFirst({ columns: { id: true }, where: { email } }))) throw error
   }

@@ -1,9 +1,10 @@
-import { Link, createFileRoute, redirect, useRouter, useHydrated } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect, useHydrated, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
-import { AuthCard } from '#/components/AuthCard'
+import { AuthCard, authLinkClass } from '#/components/AuthCard'
 import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
+import { formText } from '#/lib/form'
 
 function safeRedirect(value: unknown): string | undefined {
   return typeof value === 'string' && /^\/(?![/\\])/.test(value) ? value : undefined
@@ -16,42 +17,56 @@ export const Route = createFileRoute('/login')({
   }),
   loaderDeps: ({ search }) => ({ redirect: search.redirect }),
   loader: async ({ deps }) => {
-    const status = await getLoginStatusFn()
-    if (status.role) {
-      throw redirect({ href: deps.redirect ?? (status.role === 'admin' ? '/sell' : '/door') })
-    }
-    return status
+    const { signedIn } = await getLoginStatusFn()
+    if (signedIn) throw redirect({ href: deps.redirect ?? '/events' })
   },
   head: () => ({ meta: [{ title: 'Sign in · Community Tickets' }] }),
   component: LoginPage,
 })
 
 function LoginPage() {
-  const { eventName } = Route.useLoaderData()
   const search = Route.useSearch()
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<{ tone: 'red' | 'amber'; text: string }>()
   const [pending, setPending] = useState(false)
   const hydrated = useHydrated()
 
-  async function onSubmit(event: React.FormEvent) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const form = new FormData(event.currentTarget)
     setPending(true)
     setError(undefined)
-    const { error } = await authClient.signIn.email({ email, password })
+    const { error } = await authClient.signIn.email({
+      email: formText(form, 'email'),
+      password: formText(form, 'password'),
+      callbackURL: '/events',
+    })
     if (error) {
-      setError(error.status === 429 ? error.message : 'Incorrect email or password.')
+      setError(
+        error.status === 403
+          ? { tone: 'amber', text: 'Confirm your email first. We just sent you a new link.' }
+          : { tone: 'red', text: error.status === 429 ? error.message! : 'Incorrect email or password.' },
+      )
       setPending(false)
       return
     }
     await router.invalidate()
-    await router.navigate({ to: '/login', search: { redirect: search.redirect } })
+    await router.navigate({ href: search.redirect ?? '/events' })
   }
 
   return (
-    <AuthCard title={eventName} subtitle="Staff sign in">
+    <AuthCard
+      title="Welcome back"
+      subtitle="Sign in to manage your events."
+      footer={
+        <p>
+          New here?{' '}
+          <Link to="/signup" className={authLinkClass}>
+            Create an account
+          </Link>
+        </p>
+      }
+    >
       {search.passwordSet && (
         <div className="mb-4">
           <Alert tone="green">Your password is set. Sign in with it below.</Alert>
@@ -59,36 +74,21 @@ function LoginPage() {
       )}
       <form method="post" onSubmit={onSubmit} className="space-y-4">
         <Field label="Email">
-          <Input
-            type="email"
-            name="email"
-            autoComplete="username"
-            autoCapitalize="none"
-            autoFocus
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <Input type="email" name="email" inputMode="email" autoComplete="username" autoCapitalize="none" required />
         </Field>
-        <Field label="Password" error={error}>
-          <Input
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <Field label="Password">
+          <Input type="password" name="password" autoComplete="current-password" required />
         </Field>
+        {error && <Alert tone={error.tone}>{error.text}</Alert>}
         <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
           {pending && <Spinner />} Sign in
         </Button>
+        <p className="text-center text-sm">
+          <Link to="/forgot-password" className="font-medium text-zinc-500 hover:text-zinc-900">
+            Forgot your password?
+          </Link>
+        </p>
       </form>
-      <p className="mt-4 text-center text-sm">
-        <Link to="/forgot-password" className="font-medium text-indigo-600 hover:underline">
-          First time here, or forgot your password?
-        </Link>
-      </p>
     </AuthCard>
   )
 }

@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { formatCode, minorToInput } from '#/lib/format'
-import { getStaffSession } from '#/server/auth/auth.server'
+import { getEventAccess } from '#/server/access.server'
+import { getSessionUser } from '#/server/auth/auth.server'
 import { exportOrders } from '#/server/repo.server'
 
 function csvCell(value: string | number): string {
@@ -9,13 +10,13 @@ function csvCell(value: string | number): string {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-export const Route = createFileRoute('/api/orders.csv')({
+export const Route = createFileRoute('/api/events/$eventId/guests.csv')({
   server: {
     handlers: {
-      GET: async () => {
-        if ((await getStaffSession())?.role !== 'admin') {
-          return new Response('Unauthorized', { status: 401 })
-        }
+      GET: async ({ params }) => {
+        const user = await getSessionUser()
+        const access = user ? await getEventAccess(user, params.eventId) : null
+        if (access?.role !== 'host') return new Response('Not found', { status: 404 })
         const header = [
           'order',
           'date',
@@ -31,7 +32,7 @@ export const Route = createFileRoute('/api/orders.csv')({
           'ticket_codes',
           'notes',
         ]
-        const lines = (await exportOrders()).map((r) =>
+        const lines = (await exportOrders(access.event.id)).map((r) =>
           [
             r.id,
             r.createdAt,
@@ -55,7 +56,7 @@ export const Route = createFileRoute('/api/orders.csv')({
         return new Response(csv, {
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
-            'Content-Disposition': `attachment; filename="ticket-sales-${date}.csv"`,
+            'Content-Disposition': `attachment; filename="guests-${access.event.id}-${date}.csv"`,
             'Cache-Control': 'no-store',
           },
         })

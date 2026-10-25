@@ -2,8 +2,32 @@ export type { Role } from './permissions'
 
 export type EmailStatus = 'not_sent' | 'sent' | 'failed'
 
+export type EventRole = 'host' | 'door'
+
+export type EventDetails = {
+  id: string
+  name: string
+  startsAt: string
+  venue: string
+  info: string
+  ticketPrice: number
+  currency: string
+  contactEmail: string
+}
+
+export type EventListItem = EventDetails & { role: EventRole; ticketsSold: number; checkedIn: number }
+
+export type EventMember = {
+  userId: string
+  name: string
+  email: string
+  role: EventRole
+  createdAt: string
+}
+
 export type TicketSummary = {
   id: string
+  eventId: string
   code: string
   seq: number
   orderId: number

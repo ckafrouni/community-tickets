@@ -1,16 +1,16 @@
 import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { buyerSchema, saleSchema } from '#/lib/schemas'
+import { buyerSchema, eventIdSchema, saleSchema } from '#/lib/schemas'
 import type { EmailStatus, OrderDetail } from '#/lib/types'
+import { requireEventAccess } from '#/server/access.server'
 import { sendTicketEmail } from '#/server/email.server'
-import { adminMiddleware } from '#/server/middleware'
+import { authMiddleware } from '#/server/middleware'
 import { qrSvg } from '#/server/qr.server'
 import {
   createOrder,
   getOrder,
   getOrderTickets,
-  getSettings,
   getStats,
   listOrders,
   setOrderCancelled,
@@ -19,33 +19,36 @@ import {
 import { getBaseUrl } from '#/server/request.server'
 import { ticketUrl } from '#/server/tickets.server'
 
-const orderIdSchema = z.object({ id: z.number().int().positive() })
+const orderRef = eventIdSchema.extend({ id: z.number().int().positive() })
 
 export const createSaleFn = createServerFn({ method: 'POST' })
-  .middleware([adminMiddleware])
-  .validator(saleSchema)
-  .handler(async ({ data }) => {
-    const orderId = await createOrder(data, (await getSettings()).currency)
+  .middleware([authMiddleware])
+  .validator(saleSchema.extend(eventIdSchema.shape))
+  .handler(async ({ data, context }) => {
+    const { event } = await requireEventAccess(context.user, data.eventId, 'host')
+    const orderId = await createOrder(event.id, data, event.currency)
     let email: { status: EmailStatus; error?: string } = { status: 'not_sent' }
     if (data.sendEmail && data.buyerEmail) {
-      email = await sendTicketEmail(orderId, getBaseUrl())
+      email = await sendTicketEmail(event.id, orderId, getBaseUrl())
     }
     return { orderId, email }
   })
 
 export const listOrdersFn = createServerFn({ method: 'GET' })
-  .middleware([adminMiddleware])
-  .validator(z.object({ q: z.string().max(200) }))
-  .handler(async ({ data }) => {
-    const [orders, stats, settings] = await Promise.all([listOrders(data.q), getStats(), getSettings()])
-    return { orders, stats, currency: settings.currency }
+  .middleware([authMiddleware])
+  .validator(eventIdSchema.extend({ q: z.string().max(200) }))
+  .handler(async ({ data, context }) => {
+    const { event } = await requireEventAccess(context.user, data.eventId, 'host')
+    const [orders, stats] = await Promise.all([listOrders(event.id, data.q), getStats(event.id)])
+    return { orders, stats, currency: event.currency }
   })
 
 export const getOrderFn = createServerFn({ method: 'GET' })
-  .middleware([adminMiddleware])
-  .validator(orderIdSchema)
-  .handler(async ({ data }): Promise<OrderDetail> => {
-    const order = await getOrder(data.id)
+  .middleware([authMiddleware])
+  .validator(orderRef)
+  .handler(async ({ data, context }): Promise<OrderDetail> => {
+    await requireEventAccess(context.user, data.eventId, 'host')
+    const order = await getOrder(data.eventId, data.id)
     if (!order) throw notFound()
     const baseUrl = getBaseUrl()
     const tickets = await Promise.all(
@@ -58,24 +61,29 @@ export const getOrderFn = createServerFn({ method: 'GET' })
   })
 
 export const updateOrderFn = createServerFn({ method: 'POST' })
-  .middleware([adminMiddleware])
-  .validator(buyerSchema.extend(orderIdSchema.shape))
-  .handler(async ({ data }) => {
-    if (!(await getOrder(data.id))) throw new Error('Order not found')
-    await updateOrderBuyer(data.id, data)
+  .middleware([authMiddleware])
+  .validator(buyerSchema.extend(orderRef.shape))
+  .handler(async ({ data: { eventId, id, ...buyer }, context }) => {
+    await requireEventAccess(context.user, eventId, 'host')
+    if (!(await getOrder(eventId, id))) throw new Error('Order not found')
+    await updateOrderBuyer(eventId, id, buyer)
     return { ok: true }
   })
 
 export const resendEmailFn = createServerFn({ method: 'POST' })
-  .middleware([adminMiddleware])
-  .validator(orderIdSchema)
-  .handler(({ data }) => sendTicketEmail(data.id, getBaseUrl()))
+  .middleware([authMiddleware])
+  .validator(orderRef)
+  .handler(async ({ data, context }) => {
+    await requireEventAccess(context.user, data.eventId, 'host')
+    return sendTicketEmail(data.eventId, data.id, getBaseUrl())
+  })
 
 export const setOrderCancelledFn = createServerFn({ method: 'POST' })
-  .middleware([adminMiddleware])
-  .validator(orderIdSchema.extend({ cancelled: z.boolean(), reason: z.string().trim().max(300) }))
-  .handler(async ({ data }) => {
-    if (!(await getOrder(data.id))) throw new Error('Order not found')
-    await setOrderCancelled(data.id, data.cancelled, data.reason)
+  .middleware([authMiddleware])
+  .validator(orderRef.extend({ cancelled: z.boolean(), reason: z.string().trim().max(300) }))
+  .handler(async ({ data, context }) => {
+    await requireEventAccess(context.user, data.eventId, 'host')
+    if (!(await getOrder(data.eventId, data.id))) throw new Error('Order not found')
+    await setOrderCancelled(data.eventId, data.id, data.cancelled, data.reason)
     return { ok: true }
   })
