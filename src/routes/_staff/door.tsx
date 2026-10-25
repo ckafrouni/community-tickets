@@ -23,16 +23,13 @@ export const Route = createFileRoute('/_staff/door')({
 
 type ScanOutcome = { kind: 'result'; result: CheckInResult } | { kind: 'error'; message: string }
 
-/** Beep + vibrate so door staff don't have to read the screen for every guest. */
 function useFeedback() {
   const ctxRef = useRef<AudioContext | null>(null)
   const prime = useCallback(() => {
     try {
       ctxRef.current ??= new AudioContext()
       void ctxRef.current.resume()
-    } catch {
-      // audio unavailable
-    }
+    } catch {}
   }, [])
   const play = useCallback((ok: boolean) => {
     navigator.vibrate?.(ok ? 80 : [180, 80, 180])
@@ -71,7 +68,6 @@ function DoorPage() {
     async (text: string) => {
       if (busyRef.current || outcomeRef.current) return
       const now = Date.now()
-      // The camera sees the same code many times per second; ignore repeats for a moment.
       if (text === lastScanRef.current.text && now - lastScanRef.current.at < 3000) return
       lastScanRef.current = { text, at: now }
 
@@ -101,7 +97,6 @@ function DoorPage() {
   )
 
   const dismiss = useCallback(() => {
-    // Keep ignoring the code still in front of the camera for a moment.
     lastScanRef.current.at = Date.now()
     setOutcome(null)
   }, [])

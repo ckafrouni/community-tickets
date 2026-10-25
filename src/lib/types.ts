@@ -1,5 +1,3 @@
-// Shared types used by both server functions and UI components.
-
 export type { Role } from './permissions'
 
 export type EmailStatus = 'not_sent' | 'sent' | 'failed'
@@ -14,7 +12,6 @@ export type TicketSummary = {
   checkedInAt: string | null
   checkedInBy: string | null
   cancelled: boolean
-  /** How many tickets from the same order are already checked in. */
   orderCheckedIn: number
 }
 

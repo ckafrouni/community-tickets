@@ -148,7 +148,6 @@ export function PageHeader({
   )
 }
 
-/** Renders times in the viewer's timezone; empty during SSR to avoid hydration mismatches. */
 export function LocalTime({ iso, mode = 'datetime' }: { iso: string; mode?: 'datetime' | 'time' | 'ago' }) {
   const hydrated = useHydrated()
   if (!hydrated) return <time dateTime={iso} />
@@ -177,7 +176,6 @@ export function QrImage({ svg, label, className }: { svg: string; label: string;
       role="img"
       aria-label={label}
       className={cx('aspect-square w-full [&>svg]:h-full [&>svg]:w-full', className)}
-      // SVG markup is generated on our server by the qrcode library.
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   )

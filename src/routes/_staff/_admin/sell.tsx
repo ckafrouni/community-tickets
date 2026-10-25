@@ -19,7 +19,6 @@ function SellPage() {
   const navigate = useNavigate()
   const [buyer, setBuyer] = useState(EMPTY_BUYER)
   const [quantity, setQuantity] = useState(1)
-  // null means "use quantity × price"; a string means the seller typed a custom amount.
   const [amountInput, setAmountInput] = useState<string | null>(null)
   const [sendEmail, setSendEmail] = useState(true)
   const [error, setError] = useState<string>()

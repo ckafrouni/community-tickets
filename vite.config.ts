@@ -4,14 +4,12 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig, lazyPlugins } from 'vite-plus'
 
-// Written by tools; regenerate instead of editing (tsr, drizzle-kit, `npm run auth:generate`).
 const GENERATED_FILES = ['src/routeTree.gen.ts', 'migrations/**', 'src/server/db/auth-schema.ts']
 
 export default defineConfig({
   staged: {
     '*': 'vp check --fix',
   },
-  // Keep the project's existing code style (single quotes, no semicolons).
   fmt: {
     singleQuote: true,
     semi: false,
@@ -27,7 +25,6 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   server: {
     port: 3000,
-    // Keep local secrets and Cloudflare state out of the dev server.
     fs: { deny: ['.env', '.env.*', '.dev.vars*', '.cloudflare/**', '*.{crt,pem}', '**/.git/**'] },
   },
   plugins: lazyPlugins(() => [

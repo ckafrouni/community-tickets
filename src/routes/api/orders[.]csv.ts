@@ -5,7 +5,6 @@ import { exportOrders } from '#/server/repo.server'
 
 function csvCell(value: string | number): string {
   let text = String(value ?? '')
-  // Prevent spreadsheet formula injection from buyer-entered text.
   if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }

@@ -8,7 +8,6 @@ export const relations = defineRelations(schema, (r) => ({
   tickets: {
     order: r.one.orders({ from: r.tickets.orderId, to: r.orders.id, optional: false }),
   },
-  // Better Auth tables (see auth-schema.ts).
   user: {
     sessions: r.many.session(),
     accounts: r.many.account(),

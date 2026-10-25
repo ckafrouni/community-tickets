@@ -8,7 +8,6 @@ import { orders, settings, tickets } from './db/schema'
 
 const nowIso = () => new Date().toISOString()
 
-/** Case-insensitive substring match with LIKE wildcards in the input escaped. */
 function contains(column: AnySQLiteColumn, query: string): SQL {
   const pattern = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
   return sql`${column} LIKE ${pattern} ESCAPE '\\'`
@@ -19,8 +18,6 @@ function orderNumber(q: string) {
 }
 
 const isActiveOrder = isNull(orders.cancelledAt)
-
-// ---------------------------------------------------------------- settings
 
 export async function getSettings(): Promise<EventSettings> {
   const row = await db.query.settings.findFirst({ where: { key: 'event' } })
@@ -37,14 +34,11 @@ export async function saveSettings(value: EventSettings) {
     .onConflictDoUpdate({ target: settings.key, set: { value: row.value } })
 }
 
-// ---------------------------------------------------------------- orders
-
 const orderFields = {
   ...getColumns(orders),
   checkedIn: db.$count(tickets, and(eq(tickets.orderId, orders.id), isNotNull(tickets.checkedInAt))),
 }
 
-/** Creates the order and all of its tickets in one atomic D1 batch. */
 export async function createOrder(input: SaleInput, currency: string): Promise<number> {
   const createdAt = nowIso()
   for (let attempt = 0; ; attempt++) {
@@ -61,12 +55,11 @@ export async function createOrder(input: SaleInput, currency: string): Promise<n
         createdAt,
       })
       .returning({ id: orders.id })
-    // A batch runs as one transaction on the database's single writer, and
-    // AUTOINCREMENT ids only grow, so MAX(id) is the order inserted just above.
     const insertTickets = db.insert(tickets).values(
       Array.from({ length: input.quantity }, (_, i) => ({
         id: randomTicketId(),
         code: randomCode(),
+        // Safe: a D1 batch is one transaction, so MAX(id) is the order inserted just above.
         orderId: sql`(SELECT MAX(${orders.id}) FROM ${orders})`,
         seq: i + 1,
         createdAt,
@@ -76,13 +69,11 @@ export async function createOrder(input: SaleInput, currency: string): Promise<n
       const [[order]] = await db.batch([insertOrder, insertTickets])
       return order.id
     } catch (error) {
-      // Ticket codes are 40 random bits; retry on the (astronomically unlikely) collision.
       if (attempt >= 3 || !isUniqueViolation(error)) throw error
     }
   }
 }
 
-/** D1 reports constraint failures on the error Drizzle wraps as `cause`. */
 function isUniqueViolation(error: unknown): boolean {
   if (!(error instanceof Error)) return false
   const cause = error.cause instanceof Error ? error.cause.message : ''
@@ -151,8 +142,6 @@ export async function getStats(): Promise<SalesStats> {
   return { ...totals, checkedIn }
 }
 
-// ---------------------------------------------------------------- tickets
-
 const sibling = alias(tickets, 'sibling')
 
 const ticketFields = {
@@ -165,7 +154,6 @@ const ticketFields = {
   checkedInAt: tickets.checkedInAt,
   checkedInBy: tickets.checkedInBy,
   cancelled: sql<boolean>`${orders.cancelledAt} IS NOT NULL`.mapWith(Boolean),
-  // Scalar subquery: tickets on the same order that are already checked in.
   orderCheckedIn: sql<number>`(${db
     .select({ n: count() })
     .from(sibling)
@@ -176,7 +164,6 @@ function selectTickets(where: SQL | undefined) {
   return db.select(ticketFields).from(tickets).innerJoin(orders, eq(orders.id, tickets.orderId)).where(where)
 }
 
-/** Subquery: the given order exists and is not cancelled. */
 function activeOrderOf(orderId: AnySQLiteColumn) {
   return db
     .select({ id: orders.id })
@@ -212,10 +199,6 @@ export function recentCheckIns(limit = 8): Promise<TicketSummary[]> {
   return selectTickets(isNotNull(tickets.checkedInAt)).orderBy(desc(tickets.checkedInAt)).limit(limit)
 }
 
-/**
- * Checks a ticket in exactly once. The conditional UPDATE is atomic, so two
- * door phones scanning the same code at the same moment can't both admit it.
- */
 export async function checkInTicket(ticketId: string, by: string): Promise<CheckInResult> {
   const updated = await db
     .update(tickets)
@@ -229,7 +212,6 @@ export async function checkInTicket(ticketId: string, by: string): Promise<Check
   return { status: 'already_checked_in', ticket }
 }
 
-/** Check in every remaining ticket on an order (e.g. a family arriving together). */
 export async function checkInRemaining(orderId: number, by: string): Promise<number> {
   const updated = await db
     .update(tickets)

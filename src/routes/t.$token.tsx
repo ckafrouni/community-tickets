@@ -103,7 +103,6 @@ function TicketPage() {
   )
 }
 
-/** Shown only to signed-in staff, e.g. when they open a ticket with their phone camera. */
 function StaffPanel({ ticketId, checkedIn, cancelled }: { ticketId: string; checkedIn: boolean; cancelled: boolean }) {
   const { token } = Route.useParams()
   const router = useRouter()

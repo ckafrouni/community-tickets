@@ -6,7 +6,6 @@ import { authClient } from '#/lib/auth-client'
 
 const MIN_LENGTH = 10
 
-// Better Auth redirects here from the emailed link with ?token=… (or ?error=INVALID_TOKEN).
 export const Route = createFileRoute('/reset-password')({
   validateSearch: (search: Record<string, unknown>): { token?: string; error?: string } => ({
     token: typeof search.token === 'string' ? search.token : undefined,
@@ -23,7 +22,6 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
-  // Until hydration, a submit would be a native form post; keep the button disabled.
   const hydrated = useHydrated()
 
   if (!token || linkError) {

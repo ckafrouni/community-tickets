@@ -12,7 +12,6 @@ export const eventSettingsSchema = z.object({
   eventDate: z.string().trim().max(120),
   eventVenue: z.string().trim().max(200),
   eventInfo: z.string().trim().max(2000),
-  /** Default price per ticket, in minor units (cents). */
   ticketPrice: z.number().int().min(0).max(100_000_000),
   currency: z.string().trim().toUpperCase().refine(isValidCurrency, 'Use a 3-letter currency code like USD or EUR'),
   contactEmail: optionalEmail,
@@ -39,21 +38,17 @@ export const buyerSchema = z.object({
 
 export const saleSchema = buyerSchema.extend({
   quantity: z.number().int().min(1, 'At least 1 ticket').max(50, 'At most 50 tickets per sale'),
-  /** Cash received, in minor units. */
   amount: z.number().int().min(0).max(100_000_000),
   sendEmail: z.boolean(),
 })
 
 export type SaleInput = z.infer<typeof saleSchema>
 
-/** Turn a server-function error (possibly a serialized Zod error) into a readable message. */
 export function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
   try {
     const parsed = JSON.parse(message)
     if (Array.isArray(parsed) && parsed[0]?.message) return parsed[0].message
-  } catch {
-    // not JSON
-  }
+  } catch {}
   return message || 'Something went wrong'
 }

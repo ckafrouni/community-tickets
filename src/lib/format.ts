@@ -1,6 +1,3 @@
-// Formatting helpers that are safe to use on both server and client.
-// A fixed locale keeps server-rendered and hydrated output identical.
-
 const LOCALE = 'en'
 
 export function currencyDigits(currency: string): number {
@@ -20,7 +17,6 @@ export function isValidCurrency(currency: string): boolean {
   }
 }
 
-/** Format an amount stored in minor units (e.g. cents). */
 export function formatMoney(minor: number, currency: string): string {
   const digits = currencyDigits(currency)
   const major = minor / 10 ** digits
@@ -31,13 +27,11 @@ export function formatMoney(minor: number, currency: string): string {
   }
 }
 
-/** Convert minor units to the plain decimal string used in form inputs. */
 export function minorToInput(minor: number, currency: string): string {
   const digits = currencyDigits(currency)
   return (minor / 10 ** digits).toFixed(digits)
 }
 
-/** Parse a user-typed amount ("12", "12.5", "12,50") into minor units. */
 export function inputToMinor(input: string, currency: string): number | null {
   const cleaned = input.trim().replace(/\s/g, '').replace(',', '.')
   if (!/^\d+(\.\d+)?$/.test(cleaned)) return null
@@ -45,12 +39,10 @@ export function inputToMinor(input: string, currency: string): number | null {
   return Math.round(Number(cleaned) * 10 ** digits)
 }
 
-/** Crockford base32 code stored without separator, displayed as XXXX-XXXX. */
 export function formatCode(code: string): string {
   return code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code
 }
 
-/** Normalize a hand-typed ticket code (tolerates dashes, spaces, O/0 and I/L/1 mixups). */
 export function normalizeCode(input: string): string {
   return input
     .toUpperCase()

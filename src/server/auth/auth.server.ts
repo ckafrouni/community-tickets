@@ -11,7 +11,6 @@ import * as schema from '../db/schema'
 import { sendPasswordLinkEmail } from '../email.server'
 import { authOptions } from './options'
 
-/** Auth endpoints guarded by the LOGIN_RATE_LIMITER binding, per path and client IP. */
 const RATE_LIMITED_PATHS = new Set(['/sign-in/email', '/request-password-reset', '/reset-password'])
 
 export const auth = betterAuth({
@@ -21,17 +20,13 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
   emailAndPassword: {
     ...authOptions.emailAndPassword,
-    // The same link sets a first password (invites) or resets a forgotten one.
     resetPasswordTokenExpiresIn: 60 * 60 * 24,
     sendResetPassword: ({ user, url }) => sendPasswordLinkEmail({ to: user.email, name: user.name, url }),
   },
   advanced: {
     ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
-    // Send emails after the response without blocking it.
     backgroundTasks: { handler: waitUntil },
   },
-  // Better Auth's built-in limiter counts in isolate memory, which Workers
-  // don't share; the Cloudflare Rate Limiting binding below is global.
   rateLimit: { enabled: false },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
@@ -43,13 +38,12 @@ export const auth = betterAuth({
       }
     }),
   },
-  // tanstackStartCookies must be the last plugin.
+  // tanstackStartCookies must stay last.
   plugins: [...authOptions.plugins, tanstackStartCookies()],
 })
 
 export type StaffSession = { userId: string; name: string; email: string; role: Role }
 
-/** The signed-in staff member for this request, or null. */
 export async function getStaffSession(): Promise<StaffSession | null> {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
   const role = parseRole(session?.user.role)
@@ -66,11 +60,6 @@ function nameFromEmail(email: string) {
     .join(' ')
 }
 
-/**
- * Creates the organizer account for ADMIN_EMAIL the first time anyone visits
- * the sign-in page. It starts without a usable password: the organizer sets one
- * through the "set your password" email, which proves they own the address.
- */
 export async function ensureDefaultAdmin() {
   const email = env.ADMIN_EMAIL.toLowerCase()
   const existing = await db.query.user.findFirst({ columns: { id: true }, where: { email } })
@@ -81,13 +70,11 @@ export async function ensureDefaultAdmin() {
         email,
         name: nameFromEmail(email),
         role: 'admin',
-        // Random and never shown; replaced when the organizer sets a password.
         password: randomToken(),
         data: { emailVerified: true },
       },
     })
   } catch (error) {
-    // A concurrent request may have created it first.
     if (!(await db.query.user.findFirst({ columns: { id: true }, where: { email } }))) throw error
   }
 }

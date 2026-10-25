@@ -6,9 +6,6 @@ import { auth } from '#/server/auth/auth.server'
 import { randomToken } from '#/server/crypto.server'
 import { adminMiddleware } from '#/server/middleware'
 
-// Staff accounts are managed through Better Auth's admin plugin. Calls pass the
-// request headers so Better Auth checks the caller's own admin permissions too.
-
 const RESET_REDIRECT = '/reset-password'
 
 export type StaffMember = {
@@ -35,7 +32,6 @@ export const listStaffFn = createServerFn({ method: 'GET' })
     return { staff, currentUserId: context.session.userId }
   })
 
-/** Creates the account and emails a link to set a password. */
 export const addStaffFn = createServerFn({ method: 'POST' })
   .middleware([adminMiddleware])
   .validator(
@@ -51,7 +47,6 @@ export const addStaffFn = createServerFn({ method: 'POST' })
         name: data.name,
         email: data.email,
         role: data.role,
-        // Random and never shown; they choose their own through the emailed link.
         password: randomToken(),
         data: { emailVerified: true },
       },

@@ -16,7 +16,6 @@ import { verifyTicket } from '#/server/tickets.server'
 
 const ticketIdSchema = z.object({ ticketId: z.string().min(1).max(64) })
 
-/** Verify a scanned QR token and check the ticket in (exactly once). */
 export const scanTicketFn = createServerFn({ method: 'POST' })
   .middleware([staffMiddleware])
   .validator(z.object({ token: z.string().max(200) }))
@@ -28,7 +27,6 @@ export const scanTicketFn = createServerFn({ method: 'POST' })
     return checkInTicket(ticketId, context.session.name)
   })
 
-/** Manual check-in from the search list (staff only). */
 export const checkInTicketFn = createServerFn({ method: 'POST' })
   .middleware([staffMiddleware])
   .validator(ticketIdSchema)

@@ -6,7 +6,6 @@ import { qrPng } from './qr.server'
 import { getOrder, getOrderTickets, getSettings, setEmailStatus } from './repo.server'
 import { ticketUrl } from './tickets.server'
 
-/** The sender address, set as a plain-text binding in cloudflare.config.ts. */
 export function getEmailFrom(): string {
   return env.EMAIL_FROM
 }
@@ -19,11 +18,6 @@ function describeError(error: unknown): string {
   return String(error)
 }
 
-/**
- * Sends the order's tickets with Cloudflare Email Service. Each QR code is an
- * inline PNG attachment referenced from the HTML by Content-ID. In local
- * development the binding is simulated: emails are logged and saved to disk.
- */
 export async function sendTicketEmail(
   orderId: number,
   baseUrl: string,
@@ -54,7 +48,6 @@ export async function sendTicketEmail(
       html,
       text,
       attachments: tickets.map((t) => ({
-        // Base64 strings also work with the local email simulator.
         content: bytesToBase64(t.png),
         filename: `ticket-${t.seq}-${t.code}.png`,
         type: 'image/png',
@@ -86,7 +79,6 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 }
 
-/** Better Auth's password link: sets a first password (invites) or resets a forgotten one. */
 export async function sendPasswordLinkEmail({ to, name, url }: { to: string; name: string; url: string }) {
   const { eventName } = await getSettings()
   const greeting = name ? `Hi ${name.split(/\s+/)[0]},` : 'Hi,'
@@ -109,7 +101,6 @@ export async function sendPasswordLinkEmail({ to, name, url }: { to: string; nam
 <p style="color:#64748b;font-size:13px">The link expires in 24 hours. If you didn't expect this email, you can ignore it.</p>`,
     })
   } catch (error) {
-    // Runs in the background (waitUntil); log so it shows up in Workers Logs.
     console.error(`Failed to send password link to ${to}:`, describeError(error))
   }
 }

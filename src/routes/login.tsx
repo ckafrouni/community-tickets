@@ -5,7 +5,6 @@ import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
 
-/** Only allow redirects to local paths (prevents open redirects). */
 function safeRedirect(value: unknown): string | undefined {
   return typeof value === 'string' && /^\/(?![/\\])/.test(value) ? value : undefined
 }
@@ -35,7 +34,6 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
-  // Until hydration, a submit would be a native form post; keep the button disabled.
   const hydrated = useHydrated()
 
   async function onSubmit(event: React.FormEvent) {
@@ -48,7 +46,6 @@ function LoginPage() {
       setPending(false)
       return
     }
-    // The login loader redirects signed-in staff to the right page for their role.
     await router.invalidate()
     await router.navigate({ to: '/login', search: { redirect: search.redirect } })
   }

@@ -2,9 +2,6 @@ import { createServerFn } from '@tanstack/react-start'
 import { ensureDefaultAdmin, getStaffSession } from '#/server/auth/auth.server'
 import { getSettings } from '#/server/repo.server'
 
-// Sign-in, sign-out and password links go through Better Auth's client
-// (src/lib/auth-client.ts); these functions only read the session.
-
 export const getSessionFn = createServerFn({ method: 'GET' }).handler(async () => {
   const session = await getStaffSession()
   if (!session) return null

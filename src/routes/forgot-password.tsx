@@ -6,7 +6,6 @@ import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
 
 export const Route = createFileRoute('/forgot-password')({
-  // Also bootstraps the organizer account, so the first visit can request a link.
   loader: () => getLoginStatusFn(),
   head: () => ({ meta: [{ title: 'Set your password · Community Tickets' }] }),
   component: ForgotPasswordPage,
@@ -18,7 +17,6 @@ function ForgotPasswordPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
-  // Until hydration, a submit would be a native form post; keep the button disabled.
   const hydrated = useHydrated()
 
   async function onSubmit(event: React.FormEvent) {

@@ -6,14 +6,9 @@ export function qrSvg(text: string): string {
   return renderSVG(text, QR_OPTIONS)
 }
 
-/** QR code as a PNG (for email clients, which don't render SVG). */
 export function qrPng(text: string, scale = 10): Promise<Uint8Array> {
   return encodeMonochromePng(encode(text, QR_OPTIONS).data, scale)
 }
-
-// ------------------------------------------------------------------ PNG
-// A minimal 8-bit grayscale PNG encoder. CompressionStream('deflate') emits
-// zlib-wrapped data, which is exactly what a PNG IDAT chunk contains.
 
 const CRC_TABLE = Uint32Array.from({ length: 256 }, (_, n) => {
   let c = n
@@ -39,7 +34,6 @@ function pngChunk(type: string, data: Uint8Array): Uint8Array {
 
 async function encodeMonochromePng(modules: boolean[][], scale: number): Promise<Uint8Array> {
   const size = modules.length * scale
-  // Each scanline starts with filter type 0, followed by one byte per pixel.
   const raw = new Uint8Array((size + 1) * size)
   for (let y = 0; y < size; y++) {
     const row = modules[Math.floor(y / scale)]
@@ -52,9 +46,9 @@ async function encodeMonochromePng(modules: boolean[][], scale: number): Promise
 
   const header = new Uint8Array(13)
   const view = new DataView(header.buffer)
-  view.setUint32(0, size) // width
-  view.setUint32(4, size) // height
-  header.set([8, 0, 0, 0, 0], 8) // bit depth 8, grayscale, deflate, no filter, no interlace
+  view.setUint32(0, size)
+  view.setUint32(4, size)
+  header.set([8, 0, 0, 0, 0], 8)
 
   const parts = [
     Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a),

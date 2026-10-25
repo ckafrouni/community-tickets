@@ -1,7 +1,6 @@
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin'
 import { defineConfig } from 'vite-plus'
 
-// Tests run inside workerd (the Workers runtime) with a fresh local D1 per test file.
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [

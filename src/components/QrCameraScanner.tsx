@@ -15,19 +15,13 @@ function cameraErrorMessage(error: unknown): string {
   return `Could not start the camera: ${text}`
 }
 
-/**
- * Live camera QR scanner. `onScan` receives the raw decoded text; the parent
- * decides what to do with it (debouncing, verification, etc.).
- */
 export function QrCameraScanner({
   onScan,
   onStart,
   children,
 }: {
   onScan: (text: string) => void
-  /** Called from the "Start" click, a user gesture (useful to unlock audio). */
   onStart?: () => void
-  /** Rendered on top of the video (e.g. scan results). */
   children?: React.ReactNode
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -99,7 +93,6 @@ export function QrCameraScanner({
   }
 
   useEffect(() => {
-    // Resume the camera automatically if it was running last time (permission is remembered).
     if (localStorage.getItem(AUTOSTART_KEY) === '1') void start()
     return () => {
       scannerRef.current?.destroy()

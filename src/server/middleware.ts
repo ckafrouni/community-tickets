@@ -2,9 +2,6 @@ import { createMiddleware } from '@tanstack/react-start'
 import { setResponseHeader, setResponseStatus } from '@tanstack/react-start/server'
 import { getStaffSession } from './auth/auth.server'
 
-// Attach to every server function that needs a signed-in user. Route guards
-// only control navigation; these are the actual security boundary.
-
 export const staffMiddleware = createMiddleware({ type: 'function' }).server(async ({ next }) => {
   const session = await getStaffSession()
   if (!session) {

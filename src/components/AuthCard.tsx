@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { Logo } from './Logo'
 import { Card } from './ui'
 
-/** Centered card layout shared by the sign-in and password pages. */
 export function AuthCard({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">

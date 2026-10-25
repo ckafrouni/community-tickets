@@ -7,7 +7,6 @@ import { getSettings, getTicket } from '#/server/repo.server'
 import { getBaseUrl } from '#/server/request.server'
 import { ticketUrl, verifyTicket } from '#/server/tickets.server'
 
-/** Public ticket page data. Only reachable with a correctly signed token. */
 export const getPublicTicketFn = createServerFn({ method: 'GET' })
   .validator(z.object({ token: z.string().max(200) }))
   .handler(async ({ data }) => {
@@ -36,7 +35,6 @@ export const getPublicTicketFn = createServerFn({ method: 'GET' })
         cancelled: ticket.cancelled,
       },
       qrSvg: qrSvg(await ticketUrl(getBaseUrl(), ticket.id)),
-      // Staff who open a ticket link (e.g. with their phone camera) get check-in controls.
       staff: session ? { role: session.role, ticketId: ticket.id } : null,
     }
   })
