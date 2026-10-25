@@ -1,0 +1,10 @@
+# Local development secrets for `npm run dev`. Copy to .dev.vars and fill in.
+# Generate each value with: openssl rand -base64 32
+#
+# In production these are Worker secrets (see README: "First deploy").
+
+# Signs Better Auth sessions and tokens.
+BETTER_AUTH_SECRET=
+
+# Signs ticket QR codes (32+ characters). Changing it invalidates issued tickets.
+TICKET_SECRET=

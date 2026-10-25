@@ -1,0 +1,16 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.tanstack
+
+# Cloudflare: build output, generated types and local dev state (D1, simulated email)
+.cloudflare/
+.wrangler/
+
+# Local secrets (see .dev.vars.example)
+.env
+.dev.vars*
+!.dev.vars.example
+.vitest/
