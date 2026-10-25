@@ -1,4 +1,5 @@
 import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
+import { Toaster } from '#/components/ui/sonner'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -6,7 +7,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-      { name: 'theme-color', content: '#f4f4f5' },
+      { name: 'theme-color', content: '#ffffff' },
       { name: 'apple-mobile-web-app-title', content: 'Tickets' },
       { title: 'Community Tickets' },
     ],
@@ -28,8 +29,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-zinc-100 text-zinc-900 antialiased">
+      <body className="antialiased">
         {children}
+        <Toaster theme="light" position="top-center" />
         <Scripts />
       </body>
     </html>
@@ -39,9 +41,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 function NotFound() {
   return (
     <div className="mx-auto max-w-md px-4 py-24 text-center">
-      <p className="text-5xl font-bold text-zinc-300">404</p>
+      <p className="text-5xl font-bold text-muted-foreground/40">404</p>
       <h1 className="mt-4 text-xl font-semibold">Page not found</h1>
-      <Link to="/" className="mt-6 inline-block font-semibold text-zinc-900 hover:underline">
+      <Link to="/" className="mt-6 inline-block font-medium underline-offset-4 hover:underline">
         Go home
       </Link>
     </div>

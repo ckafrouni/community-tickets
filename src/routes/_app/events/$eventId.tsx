@@ -1,7 +1,8 @@
 import { Link, Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { CalendarX2, CirclePlus, ScanLine, Settings, Users } from 'lucide-react'
 import { AppHeader, Main } from '#/components/AppHeader'
-import { EmptyState, buttonClass } from '#/components/ui'
+import { buttonVariants } from '#/components/ui/button'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '#/components/ui/empty'
 import { getEventFn } from '#/functions/events.functions'
 import { describeEventDate } from '#/lib/format'
 
@@ -24,21 +25,21 @@ const TABS = [
 
 function EventLayout() {
   const { event, role } = Route.useRouteContext()
-  const isHost = role === 'host'
+  const isOrganizer = role === 'organizer'
   const subtitle = [event.startsAt ? describeEventDate(event.startsAt) : '', event.venue].filter(Boolean).join(' · ')
 
   return (
     <>
       <AppHeader back title={event.name} subtitle={subtitle || undefined}>
-        {isHost && (
+        {isOrganizer && (
           <nav aria-label="Event" className="mx-auto hidden max-w-3xl gap-1 px-4 pb-2.5 md:flex">
             {TABS.map((tab) => (
               <Link
                 key={tab.to}
                 to={tab.to}
                 params={{ eventId: event.id }}
-                className="rounded-full px-3 py-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-900"
-                activeProps={{ className: '!bg-white !text-zinc-900 shadow-sm ring-1 ring-black/5' }}
+                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'text-muted-foreground' })}
+                activeProps={{ className: '!bg-muted !text-foreground' }}
               >
                 {tab.label}
               </Link>
@@ -47,14 +48,14 @@ function EventLayout() {
         )}
       </AppHeader>
 
-      <Main tabBar={isHost}>
+      <Main tabBar={isOrganizer}>
         <Outlet />
       </Main>
 
-      {isHost && (
+      {isOrganizer && (
         <nav
           aria-label="Event"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-black/5 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
         >
           <div className="mx-auto grid max-w-md grid-cols-4">
             {TABS.map(({ to, label, icon: Icon }) => (
@@ -62,8 +63,8 @@ function EventLayout() {
                 key={to}
                 to={to}
                 params={{ eventId: event.id }}
-                className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium text-zinc-400 transition active:text-zinc-900"
-                activeProps={{ className: '!text-zinc-900' }}
+                className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition active:text-foreground"
+                activeProps={{ className: '!text-foreground' }}
               >
                 <Icon className="size-6" strokeWidth={1.75} />
                 {label}
@@ -81,12 +82,20 @@ function EventNotFound() {
     <>
       <AppHeader back title="Event not found" />
       <Main>
-        <EmptyState icon={<CalendarX2 />} title="Event not found">
-          <p>It doesn't exist, or you're not on its team.</p>
-          <Link to="/events" className={buttonClass('secondary', 'md', 'mt-4')}>
-            Back to events
-          </Link>
-        </EmptyState>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CalendarX2 />
+            </EmptyMedia>
+            <EmptyTitle>Event not found</EmptyTitle>
+            <EmptyDescription>It doesn't exist, or you're not on its team.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Link to="/events" className={buttonVariants({ variant: 'outline' })}>
+              Back to events
+            </Link>
+          </EmptyContent>
+        </Empty>
       </Main>
     </>
   )

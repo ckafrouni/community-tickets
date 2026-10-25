@@ -1,7 +1,12 @@
-import { Link, createFileRoute, useNavigate, useHydrated } from '@tanstack/react-router'
+import { Link, createFileRoute, useHydrated, useNavigate } from '@tanstack/react-router'
+import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
+import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Button } from '#/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
+import { Spinner } from '#/components/ui/spinner'
 import { authClient } from '#/lib/auth-client'
 import { formText } from '#/lib/form'
 
@@ -35,7 +40,10 @@ function ResetPasswordPage() {
           </p>
         }
       >
-        <Alert tone="red">The link is invalid or older than 24 hours. Request a new one.</Alert>
+        <Alert variant="destructive">
+          <TriangleAlert />
+          <AlertDescription>The link is invalid or older than 24 hours. Request a new one.</AlertDescription>
+        </Alert>
       </AuthCard>
     )
   }
@@ -61,16 +69,40 @@ function ResetPasswordPage() {
 
   return (
     <AuthCard title="Choose a password" subtitle={`At least ${MIN_LENGTH} characters.`}>
-      <form method="post" onSubmit={onSubmit} className="space-y-4">
-        <Field label="New password">
-          <Input type="password" name="password" autoComplete="new-password" minLength={MIN_LENGTH} required />
-        </Field>
-        <Field label="Confirm password" error={error}>
-          <Input type="password" name="confirm" autoComplete="new-password" minLength={MIN_LENGTH} required />
-        </Field>
-        <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
-          {pending && <Spinner />} Save password
-        </Button>
+      <form method="post" onSubmit={onSubmit}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="new-password">New password</FieldLabel>
+            <Input
+              id="new-password"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              minLength={MIN_LENGTH}
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="confirm-password">Confirm password</FieldLabel>
+            <Input
+              id="confirm-password"
+              type="password"
+              name="confirm"
+              autoComplete="new-password"
+              minLength={MIN_LENGTH}
+              required
+            />
+          </Field>
+          {error && (
+            <Alert variant="destructive">
+              <TriangleAlert />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <Button type="submit" size="lg" disabled={!hydrated || pending}>
+            {pending && <Spinner />} Save password
+          </Button>
+        </FieldGroup>
       </form>
     </AuthCard>
   )

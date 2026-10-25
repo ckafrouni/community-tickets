@@ -1,7 +1,12 @@
 import { Link, createFileRoute, useHydrated } from '@tanstack/react-router'
+import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
+import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Button } from '#/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
+import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
 import { formText } from '#/lib/form'
@@ -42,19 +47,35 @@ function ForgotPasswordPage() {
       }
     >
       {sentTo ? (
-        <p className="text-[15px] text-zinc-600">
+        <p className="text-[15px] text-muted-foreground">
           If {sentTo} has an account, it will get a link within a minute. The link works for 24 hours. Can't find it?
           Check your spam folder.
         </p>
       ) : (
-        <form method="post" onSubmit={onSubmit} className="space-y-4">
-          <Field label="Email">
-            <Input type="email" name="email" inputMode="email" autoComplete="username" autoCapitalize="none" required />
-          </Field>
-          {error && <Alert tone="red">{error}</Alert>}
-          <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
-            {pending && <Spinner />} Email me a link
-          </Button>
+        <form method="post" onSubmit={onSubmit}>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="forgot-email">Email</FieldLabel>
+              <Input
+                id="forgot-email"
+                type="email"
+                name="email"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                required
+              />
+            </Field>
+            {error && (
+              <Alert variant="destructive">
+                <TriangleAlert />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" size="lg" disabled={!hydrated || pending}>
+              {pending && <Spinner />} Email me a link
+            </Button>
+          </FieldGroup>
         </form>
       )}
     </AuthCard>

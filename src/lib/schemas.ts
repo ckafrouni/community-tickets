@@ -1,12 +1,16 @@
 import { z } from 'zod'
 import { isValidCurrency, parseEventDate } from './format'
 
+const isEmail = (v: string) => z.email().safeParse(v).success
+
 const optionalEmail = z
   .string()
   .trim()
   .toLowerCase()
   .max(200)
-  .refine((v) => v === '' || z.email().safeParse(v).success, 'Enter a valid email address')
+  .refine((v) => v === '' || isEmail(v), 'Enter a valid email address')
+
+const requiredEmail = z.string().trim().toLowerCase().max(200).refine(isEmail, 'Enter a valid email address')
 
 export const eventSchema = z.object({
   name: z.string().trim().min(1, 'Event name is required').max(120),
@@ -37,7 +41,7 @@ export const eventIdSchema = z.object({ eventId: z.string().min(1).max(32) })
 
 export const buyerSchema = z.object({
   buyerName: z.string().trim().min(1, 'Name is required').max(120),
-  buyerEmail: optionalEmail,
+  buyerEmail: requiredEmail,
   buyerPhone: z.string().trim().max(40),
   notes: z.string().trim().max(1000),
 })
@@ -45,7 +49,6 @@ export const buyerSchema = z.object({
 export const saleSchema = buyerSchema.extend({
   quantity: z.number().int().min(1, 'At least 1 ticket').max(50, 'At most 50 tickets per sale'),
   amount: z.number().int().min(0).max(100_000_000),
-  sendEmail: z.boolean(),
 })
 
 export type SaleInput = z.infer<typeof saleSchema>
@@ -53,7 +56,7 @@ export type SaleInput = z.infer<typeof saleSchema>
 export const memberSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(120),
   email: z.email('Enter a valid email address').trim().toLowerCase(),
-  role: z.enum(['host', 'door']),
+  role: z.enum(['organizer', 'volunteer']),
 })
 
 export function errorMessage(error: unknown): string {

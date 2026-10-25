@@ -16,7 +16,7 @@ export const Route = createFileRoute('/api/events/$eventId/guests.csv')({
       GET: async ({ params }) => {
         const user = await getSessionUser()
         const access = user ? await getEventAccess(user, params.eventId) : null
-        if (access?.role !== 'host') return new Response('Not found', { status: 404 })
+        if (access?.role !== 'organizer') return new Response('Not found', { status: 404 })
         const header = [
           'order',
           'date',

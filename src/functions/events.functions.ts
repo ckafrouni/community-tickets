@@ -28,7 +28,7 @@ export const updateEventFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(eventSchema.extend(eventIdSchema.shape))
   .handler(async ({ data: { eventId, ...input }, context }) => {
-    await requireEventAccess(context.user, eventId, 'host')
+    await requireEventAccess(context.user, eventId, 'organizer')
     await updateEvent(eventId, input)
     return { ok: true }
   })
@@ -37,7 +37,7 @@ export const eventEmailInfoFn = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .validator(eventIdSchema)
   .handler(async ({ data, context }) => {
-    await requireEventAccess(context.user, data.eventId, 'host')
+    await requireEventAccess(context.user, data.eventId, 'organizer')
     return { emailFrom: getEmailFrom(), baseUrl: getBaseUrl() }
   })
 
@@ -45,7 +45,7 @@ export const sendTestEmailFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(eventIdSchema.extend({ to: z.email() }))
   .handler(async ({ data, context }) => {
-    const { event } = await requireEventAccess(context.user, data.eventId, 'host')
+    const { event } = await requireEventAccess(context.user, data.eventId, 'organizer')
     await sendTestEmail(event, data.to)
     return { ok: true }
   })

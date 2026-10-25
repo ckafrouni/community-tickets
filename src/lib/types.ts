@@ -2,7 +2,7 @@ export type { Role } from './permissions'
 
 export type EmailStatus = 'not_sent' | 'sent' | 'failed'
 
-export type EventRole = 'host' | 'door'
+export type EventRole = 'organizer' | 'volunteer'
 
 export type EventDetails = {
   id: string

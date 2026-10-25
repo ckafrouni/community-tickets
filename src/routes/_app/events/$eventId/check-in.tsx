@@ -1,20 +1,15 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { Check, RotateCcw, TriangleAlert, X } from 'lucide-react'
+import { Check, RotateCcw, Search, TriangleAlert, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { LocalTime, PersonAvatar, SectionTitle } from '#/components/common'
 import { QrCameraScanner } from '#/components/QrCameraScanner'
-import {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  List,
-  LocalTime,
-  SearchInput,
-  SectionTitle,
-  Spinner,
-  cx,
-  rowClass,
-} from '#/components/ui'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '#/components/ui/input-group'
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '#/components/ui/item'
+import { Progress } from '#/components/ui/progress'
+import { Spinner } from '#/components/ui/spinner'
 import {
   checkInOverviewFn,
   checkInRemainingFn,
@@ -22,11 +17,12 @@ import {
   scanTicketFn,
   searchTicketsFn,
   undoCheckInFn,
-} from '#/functions/door.functions'
+} from '#/functions/check-in.functions'
 import { formatCode, plural } from '#/lib/format'
 import { errorMessage } from '#/lib/schemas'
 import { extractToken } from '#/lib/token'
 import type { CheckInResult, TicketSummary } from '#/lib/types'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/events/$eventId/check-in')({
   loader: ({ params }) => checkInOverviewFn({ data: { eventId: params.eventId } }),
@@ -118,17 +114,15 @@ function CheckInPage() {
   const percent = overview.ticketsSold ? Math.round((overview.checkedIn / overview.ticketsSold) * 100) : 0
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="mx-auto flex max-w-md flex-col gap-6">
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-[28px] leading-tight font-bold tracking-tight">Check in</h1>
-          <p className="text-[15px] font-semibold text-zinc-500 tabular-nums">
-            <span className="text-zinc-900">{overview.checkedIn}</span> / {overview.ticketsSold}
+          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Check in</h1>
+          <p className="text-[15px] font-semibold text-muted-foreground tabular-nums">
+            <span className="text-foreground">{overview.checkedIn}</span> / {overview.ticketsSold}
           </p>
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200" aria-hidden="true">
-          <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${percent}%` }} />
-        </div>
+        <Progress value={percent} aria-label="Guests checked in" className="mt-3" />
       </div>
 
       <QrCameraScanner onScan={handleScan} onStart={feedback.prime}>
@@ -140,22 +134,24 @@ function CheckInPage() {
       {overview.recent.length > 0 && (
         <section>
           <SectionTitle>Recently checked in</SectionTitle>
-          <List>
+          <ItemGroup className="gap-2">
             {overview.recent.map((t) => (
-              <li key={t.id} className={rowClass}>
-                <Avatar name={t.buyerName} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{t.buyerName}</span>
-                  <span className="block text-sm text-zinc-500">
+              <Item key={t.id} variant="outline" size="sm" className="bg-card">
+                <ItemMedia>
+                  <PersonAvatar name={t.buyerName} />
+                </ItemMedia>
+                <ItemContent className="min-w-0">
+                  <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
+                  <ItemDescription>
                     {t.seq} of {t.quantity} · {formatCode(t.code)}
-                  </span>
-                </span>
-                <span className="shrink-0 text-sm text-zinc-400">
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions className="text-sm text-muted-foreground">
                   {t.checkedInAt && <LocalTime iso={t.checkedInAt} mode="ago" />}
-                </span>
-              </li>
+                </ItemActions>
+              </Item>
             ))}
-          </List>
+          </ItemGroup>
         </section>
       )}
     </div>
@@ -198,7 +194,7 @@ function ScanResultOverlay({
     }
   }
 
-  let tone = 'bg-zinc-800'
+  let tone = 'bg-neutral-800'
   let icon = <TriangleAlert className="size-7" />
   let title = 'Could not verify'
   let detail: React.ReactNode = outcome.kind === 'error' ? outcome.message : null
@@ -238,13 +234,13 @@ function ScanResultOverlay({
   }
 
   return (
-    <div className={cx('absolute inset-0 z-10 flex flex-col gap-3 overflow-y-auto p-5 text-white', tone)} role="alert">
+    <div className={cn('absolute inset-0 z-10 flex flex-col gap-3 overflow-y-auto p-5 text-white', tone)} role="alert">
       <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/20">{icon}</div>
-        <p className="text-lg font-bold">{title}</p>
+        <p className="text-lg font-semibold">{title}</p>
         {ticket && (
           <>
-            <p className="line-clamp-2 text-3xl leading-tight font-extrabold break-words">{ticket.buyerName}</p>
+            <p className="line-clamp-2 font-heading text-3xl leading-tight font-bold break-words">{ticket.buyerName}</p>
             <p className="text-sm opacity-90">
               Ticket {ticket.seq} of {ticket.quantity} · {formatCode(ticket.code)}
             </p>
@@ -260,7 +256,7 @@ function ScanResultOverlay({
         {result?.status === 'checked_in' && remaining > 0 && !note && (
           <Button
             size="lg"
-            className="!bg-white !text-zinc-900"
+            variant="secondary"
             disabled={busy}
             onClick={() =>
               act(async () => {
@@ -277,7 +273,7 @@ function ScanResultOverlay({
             <Button
               variant="ghost"
               size="lg"
-              className="!text-white hover:!bg-white/15"
+              className="text-white hover:bg-white/15 hover:text-white"
               disabled={busy}
               onClick={() =>
                 act(async () => {
@@ -286,12 +282,12 @@ function ScanResultOverlay({
                 })
               }
             >
-              <RotateCcw className="size-5" /> Undo
+              <RotateCcw /> Undo
             </Button>
           ) : (
             <span />
           )}
-          <Button size="lg" className="!bg-black/25 hover:!bg-black/35" onClick={onDismiss} autoFocus>
+          <Button size="lg" className="bg-black/25 text-white hover:bg-black/35" onClick={onDismiss} autoFocus>
             Scan next
           </Button>
         </div>
@@ -312,7 +308,6 @@ function ManualLookup({
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<TicketSummary[] | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>()
   const [busyId, setBusyId] = useState<string | null>(null)
   const requestRef = useRef(0)
 
@@ -327,12 +322,9 @@ function ManualLookup({
       setLoading(true)
       try {
         const rows = await searchTicketsFn({ data: { eventId, q } })
-        if (request === requestRef.current) {
-          setResults(rows)
-          setError(undefined)
-        }
+        if (request === requestRef.current) setResults(rows)
       } catch (e) {
-        if (request === requestRef.current) setError(errorMessage(e))
+        if (request === requestRef.current) toast.error(errorMessage(e))
       } finally {
         if (request === requestRef.current) setLoading(false)
       }
@@ -357,56 +349,58 @@ function ManualLookup({
       await search(query)
       onChanged()
     } catch (e) {
-      setError(errorMessage(e))
+      toast.error(errorMessage(e))
     } finally {
       setBusyId(null)
     }
   }
 
   return (
-    <section className="space-y-3">
+    <section className="flex flex-col gap-3">
       <SectionTitle>Find a guest</SectionTitle>
-      <SearchInput
-        placeholder="Name, email or ticket code"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        aria-label="Find a guest"
-      />
-      {error && <Alert tone="red">{error}</Alert>}
-      {loading && !results && (
-        <p className="flex items-center gap-2 px-1 text-sm text-zinc-500">
-          <Spinner /> Searching…
-        </p>
-      )}
-      {results && results.length === 0 && <p className="px-1 text-sm text-zinc-500">No tickets found.</p>}
+      <InputGroup>
+        <InputGroupAddon>{loading ? <Spinner /> : <Search />}</InputGroupAddon>
+        <InputGroupInput
+          type="search"
+          autoComplete="off"
+          placeholder="Name, email or ticket code"
+          aria-label="Find a guest"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </InputGroup>
+      {results && results.length === 0 && <p className="px-1 text-sm text-muted-foreground">No tickets found.</p>}
       {results && results.length > 0 && (
-        <List>
+        <ItemGroup className="gap-2">
           {results.map((t) => (
-            <li key={t.id} className={rowClass}>
-              <Avatar name={t.buyerName} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-semibold">{t.buyerName}</span>
-                <span className="block text-sm text-zinc-500">
+            <Item key={t.id} variant="outline" size="sm" className="bg-card">
+              <ItemMedia>
+                <PersonAvatar name={t.buyerName} />
+              </ItemMedia>
+              <ItemContent className="min-w-0">
+                <ItemTitle className="w-full truncate">{t.buyerName}</ItemTitle>
+                <ItemDescription>
                   {t.seq} of {t.quantity} · {formatCode(t.code)}
-                </span>
-              </span>
-              {t.cancelled ? (
-                <Badge tone="red">Cancelled</Badge>
-              ) : (
-                <Button
-                  size="sm"
-                  variant={t.checkedInAt ? 'soft' : 'success'}
-                  disabled={busyId !== null}
-                  onClick={() => void toggle(t)}
-                  className="min-w-24"
-                >
-                  {busyId === t.id && <Spinner />}
-                  {t.checkedInAt ? 'Undo' : 'Check in'}
-                </Button>
-              )}
-            </li>
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                {t.cancelled ? (
+                  <Badge variant="destructive">Cancelled</Badge>
+                ) : (
+                  <Button
+                    variant={t.checkedInAt ? 'secondary' : 'default'}
+                    disabled={busyId !== null}
+                    onClick={() => void toggle(t)}
+                    className="min-w-24"
+                  >
+                    {busyId === t.id && <Spinner />}
+                    {t.checkedInAt ? 'Undo' : 'Check in'}
+                  </Button>
+                )}
+              </ItemActions>
+            </Item>
           ))}
-        </List>
+        </ItemGroup>
       )}
     </section>
   )

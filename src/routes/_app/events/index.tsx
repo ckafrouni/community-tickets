@@ -2,9 +2,15 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { CalendarPlus, MapPin, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { AppHeader, Main } from '#/components/AppHeader'
-import { Badge, EmptyState, EventCover, Segmented, buttonClass } from '#/components/ui'
+import { EventCover } from '#/components/common'
+import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '#/components/ui/empty'
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '#/components/ui/item'
+import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { listEventsFn } from '#/functions/events.functions'
 import { parseEventDate } from '#/lib/format'
+import { ROLE_LABELS } from '#/lib/roles'
 import type { EventListItem } from '#/lib/types'
 
 export const Route = createFileRoute('/_app/events/')({
@@ -34,70 +40,73 @@ function EventsPage() {
   const { events, today } = Route.useLoaderData()
   const [tab, setTab] = useState<Tab>('upcoming')
   const isPast = (e: EventListItem) => parseEventDate(e.startsAt) !== null && e.startsAt.slice(0, 10) < today
-  const upcoming = events.filter((e) => !isPast(e))
-  const past = events.filter(isPast).reverse()
-  const shown = tab === 'upcoming' ? upcoming : past
+  const shown = tab === 'upcoming' ? events.filter((e) => !isPast(e)) : events.filter(isPast).reverse()
 
   return (
     <>
       <AppHeader title="Community Tickets" />
       <Main>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h1 className="text-[28px] leading-tight font-bold tracking-tight">Events</h1>
-          <Link to="/events/new" className={buttonClass('primary', 'sm')}>
-            <Plus className="size-4" strokeWidth={2.5} /> Create
+          <h1 className="font-heading text-[28px] leading-tight font-semibold tracking-tight">Events</h1>
+          <Link to="/events/new" className={buttonVariants()}>
+            <Plus data-icon="inline-start" /> Create
           </Link>
         </div>
 
         {events.length > 0 && (
-          <div className="mb-5">
-            <Segmented
-              label="Show"
-              value={tab}
-              onChange={setTab}
-              options={[
-                { value: 'upcoming', label: 'Upcoming' },
-                { value: 'past', label: 'Past' },
-              ]}
-            />
-          </div>
+          <ToggleGroup
+            aria-label="Show"
+            variant="outline"
+            spacing={0}
+            value={[tab]}
+            onValueChange={(value) => value[0] && setTab(value[0] as Tab)}
+            className="mb-5"
+          >
+            <ToggleGroupItem value="upcoming">Upcoming</ToggleGroupItem>
+            <ToggleGroupItem value="past">Past</ToggleGroupItem>
+          </ToggleGroup>
         )}
 
         {shown.length === 0 ? (
-          <EmptyState
-            icon={<CalendarPlus />}
-            title={
-              events.length === 0
-                ? 'Create your first event'
-                : tab === 'upcoming'
-                  ? 'No upcoming events'
-                  : 'No past events'
-            }
-          >
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarPlus />
+              </EmptyMedia>
+              <EmptyTitle>
+                {events.length === 0
+                  ? 'Create your first event'
+                  : tab === 'upcoming'
+                    ? 'No upcoming events'
+                    : 'No past events'}
+              </EmptyTitle>
+              {events.length === 0 && (
+                <EmptyDescription>
+                  Sell tickets for cash, email QR codes and check guests in at the door.
+                </EmptyDescription>
+              )}
+            </EmptyHeader>
             {events.length === 0 && (
-              <>
-                <p>Sell tickets for cash, email QR codes and check guests in at the door.</p>
-                <Link to="/events/new" className={buttonClass('primary', 'md', 'mt-4')}>
+              <EmptyContent>
+                <Link to="/events/new" className={buttonVariants()}>
                   Create event
                 </Link>
-              </>
+              </EmptyContent>
             )}
-          </EmptyState>
+          </Empty>
         ) : (
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             {groupByDay(shown).map((group) => (
               <section key={group.key}>
-                <h2 className="mb-2 flex items-center gap-2 px-1 text-[15px] font-semibold text-zinc-900">
-                  <span className="size-2 rounded-full bg-zinc-300" aria-hidden="true" />
+                <h2 className="mb-2 flex items-center gap-2 px-1 text-[15px] font-semibold">
+                  <span className="size-2 rounded-full bg-muted-foreground/30" aria-hidden="true" />
                   {group.label}
                 </h2>
-                <ul className="space-y-3">
+                <ItemGroup className="gap-3">
                   {group.events.map((event) => (
-                    <li key={event.id}>
-                      <EventCard event={event} />
-                    </li>
+                    <EventItem key={event.id} event={event} />
                   ))}
-                </ul>
+                </ItemGroup>
               </section>
             ))}
           </div>
@@ -107,33 +116,33 @@ function EventsPage() {
   )
 }
 
-function EventCard({ event }: { event: EventListItem }) {
+function EventItem({ event }: { event: EventListItem }) {
   const when = parseEventDate(event.startsAt)
   return (
-    <Link
-      to="/events/$eventId"
-      params={{ eventId: event.id }}
-      className="flex gap-3 rounded-2xl bg-white p-3 pl-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-black/6 transition hover:ring-black/12 active:bg-zinc-50"
+    <Item
+      variant="outline"
+      className="bg-card shadow-sm"
+      render={<Link to="/events/$eventId" params={{ eventId: event.id }} />}
     >
-      <div className="min-w-0 flex-1 py-0.5">
-        {when && <p className="text-sm text-zinc-500">{when.time}</p>}
-        <p className="truncate text-[17px] leading-snug font-semibold text-zinc-900">{event.name}</p>
+      <ItemContent className="min-w-0">
+        {when && <ItemDescription>{when.time}</ItemDescription>}
+        <ItemTitle className="text-base">{event.name}</ItemTitle>
         {event.venue && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-sm text-zinc-500">
+          <ItemDescription className="flex items-center gap-1">
             <MapPin className="size-3.5 shrink-0" />
             <span className="truncate">{event.venue}</span>
-          </p>
+          </ItemDescription>
         )}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Badge tone={event.role === 'host' ? 'dark' : 'neutral'}>
-            {event.role === 'host' ? 'Host' : 'Door staff'}
-          </Badge>
-          <span className="text-xs text-zinc-500 tabular-nums">
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <Badge variant={event.role === 'organizer' ? 'default' : 'secondary'}>{ROLE_LABELS[event.role]}</Badge>
+          <span className="text-xs text-muted-foreground tabular-nums">
             {event.ticketsSold} sold · {event.checkedIn} in
           </span>
         </div>
-      </div>
-      <EventCover name={event.name} className="size-20 rounded-xl text-xl" />
-    </Link>
+      </ItemContent>
+      <ItemMedia variant="image" className="size-20 rounded-2xl">
+        <EventCover name={event.name} className="size-full text-xl" />
+      </ItemMedia>
+    </Item>
   )
 }

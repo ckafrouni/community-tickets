@@ -2,11 +2,18 @@ import { expect, test } from '@playwright/test'
 import { deviceOptions, expectFitsScreen, expectTouchTarget, linkIn, screenshotter, waitForEmail } from './helpers'
 
 const PASSWORD = 'correct-horse-battery'
+const EVENT_YEAR = new Date().getFullYear() + 1
+const EVENT_DAY = new Date(Date.UTC(EVENT_YEAR, 10, 14)).toLocaleDateString('en', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+})
 
 test('an organizer runs an event from their phone', async ({ page, browser }, testInfo) => {
   const run = `${Date.now().toString(36)}${testInfo.project.name}`
   const host = { name: 'Maya Host', email: `host-${run}@example.com` }
-  const door = { name: 'Dan Door', email: `door-${run}@example.com` }
+  const volunteer = { name: 'Val Volunteer', email: `volunteer-${run}@example.com` }
   const buyer = { first: `Ana${run}`, name: `Ana${run} Lopez`, email: `ana-${run}@example.com` }
   const eventName = `Harvest Supper ${run}`
   const shot = screenshotter(page, testInfo)
@@ -34,7 +41,11 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
   await test.step('create an event', async () => {
     await page.getByRole('link', { name: 'Create event' }).click()
     await page.getByLabel('Name').fill(eventName)
-    await page.getByLabel('Date & time').fill('2026-11-14T18:30')
+    await page.getByLabel('Date', { exact: true }).click()
+    await page.getByRole('combobox', { name: /month/i }).selectOption('10')
+    await page.getByRole('combobox', { name: /year/i }).selectOption(String(EVENT_YEAR))
+    await page.getByRole('button', { name: new RegExp(`November 14(th)?, ${EVENT_YEAR}`) }).click()
+    await page.getByLabel('Time').fill('18:30')
     await page.getByLabel('Location').fill('Community Hall, 12 Main St')
     const create = page.getByRole('button', { name: 'Create event' })
     await expect(create).toBeInViewport()
@@ -45,7 +56,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     await expect(page).toHaveURL(/\/events\/[a-z0-9]+\/guests$/)
     eventUrl = page.url().replace(/\/guests$/, '')
     await expect(page.getByText('No guests yet')).toBeVisible()
-    await expect(page.getByText('Saturday, November 14 · 6:30 PM')).toBeVisible()
+    await expect(page.getByText(`${EVENT_DAY} · 6:30 PM`)).toBeVisible()
     for (const tab of ['Sell', 'Guests', 'Check in', 'Settings']) {
       await expectTouchTarget(tabs.getByRole('link', { name: tab }))
     }
@@ -71,7 +82,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
 
     const email = await waitForEmail((text) => text.includes(`You're in, ${buyer.first}!`))
     expect(email).toContain(eventName)
-    expect(email).toContain('Saturday, November 14 · 6:30 PM')
+    expect(email).toContain(`${EVENT_DAY} · 6:30 PM`)
     ticketUrl = linkIn(email, '/t/')
   })
 
@@ -94,7 +105,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     const row = page.getByRole('link', { name: new RegExp(buyer.name) })
     await expect(row).toContainText('1/2 in')
     await expectTouchTarget(row)
-    await page.getByRole('radio', { name: 'Arrived', exact: true }).click()
+    await page.getByRole('button', { name: 'Arrived', exact: true }).click()
     await expect(row).toBeVisible()
     await expectFitsScreen(page)
     await shot('06-guests')
@@ -107,7 +118,7 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     const guestPage = await guest.newPage()
     await guestPage.goto(ticketUrl)
     await expect(guestPage.getByRole('heading', { name: eventName })).toBeVisible()
-    await expect(guestPage.getByText('Saturday, November 14')).toBeVisible()
+    await expect(guestPage.getByText(EVENT_DAY)).toBeVisible()
     await expect(guestPage.getByText(buyer.name)).toBeVisible()
     await expect(guestPage.getByRole('region', { name: 'Staff controls' })).toHaveCount(0)
     await expectFitsScreen(guestPage)
@@ -119,40 +130,42 @@ test('an organizer runs an event from their phone', async ({ page, browser }, te
     await guest.close()
   })
 
-  await test.step('invite door staff, who can only check guests in', async () => {
+  await test.step('invite a volunteer, who can only check guests in', async () => {
     await tabs.getByRole('link', { name: 'Settings' }).click()
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible()
     await expectFitsScreen(page)
     await shot('08-settings')
     await page.getByRole('link', { name: /^Team/ }).click()
     await expect(page.getByRole('heading', { name: 'Team', exact: true })).toBeVisible()
-    await page.getByLabel('Name').fill(door.name)
-    await page.getByLabel('Email').fill(door.email)
+    await page.getByLabel('Name').fill(volunteer.name)
+    await page.getByLabel('Email').fill(volunteer.email)
     await page.getByRole('button', { name: 'Send invite' }).click()
-    await expect(page.getByText(`Invited ${door.email}.`)).toBeVisible()
+    await expect(page.getByText(`Invited ${volunteer.email}.`)).toBeVisible()
     await expectFitsScreen(page)
     await shot('09-team')
 
-    const invite = await waitForEmail((text) => text.includes(door.email) && text.includes(eventName))
-    const doorContext = await browser.newContext(deviceOptions(testInfo))
-    const doorPage = await doorContext.newPage()
-    await doorPage.goto(linkIn(invite, '/api/auth/reset-password/'))
-    await doorPage.getByLabel('New password').fill(PASSWORD)
-    await doorPage.getByLabel('Confirm password').fill(PASSWORD)
-    await doorPage.getByRole('button', { name: 'Save password' }).click()
-    await expect(doorPage.getByText('Your password is set')).toBeVisible()
-    await doorPage.getByLabel('Email').fill(door.email)
-    await doorPage.getByLabel('Password').fill(PASSWORD)
-    await doorPage.getByRole('button', { name: 'Sign in' }).click()
+    const invite = await waitForEmail((text) => text.includes(volunteer.email) && text.includes(eventName))
+    const volunteerContext = await browser.newContext(deviceOptions(testInfo))
+    const volunteerPage = await volunteerContext.newPage()
+    await volunteerPage.goto(linkIn(invite, '/api/auth/reset-password/'))
+    await volunteerPage.getByLabel('New password').fill(PASSWORD)
+    await volunteerPage.getByLabel('Confirm password').fill(PASSWORD)
+    await volunteerPage.getByRole('button', { name: 'Save password' }).click()
+    await expect(volunteerPage.getByText('Your password is set')).toBeVisible()
+    await volunteerPage.getByLabel('Email').fill(volunteer.email)
+    await volunteerPage.getByLabel('Password').fill(PASSWORD)
+    await volunteerPage.getByRole('button', { name: 'Sign in' }).click()
 
-    await expect(doorPage).toHaveURL(/\/events$/)
-    await doorPage.getByRole('link', { name: new RegExp(eventName) }).click()
-    await expect(doorPage).toHaveURL(/\/check-in$/)
-    await expect(doorPage.getByRole('navigation', { name: 'Event' })).toHaveCount(0)
-    await shot('10-door-staff', doorPage)
-    await doorPage.goto(`${eventUrl}/guests`)
-    await expect(doorPage).toHaveURL(/\/check-in$/)
-    await doorContext.close()
+    await expect(volunteerPage).toHaveURL(/\/events$/)
+    await volunteerPage.getByRole('link', { name: new RegExp(eventName) }).click()
+    await expect(volunteerPage).toHaveURL(/\/check-in$/)
+    await expect(volunteerPage.getByRole('navigation', { name: 'Event' })).toHaveCount(0)
+    await shot('10-volunteer', volunteerPage)
+    await volunteerPage.goto(`${eventUrl}/guests`).catch((error: Error) => {
+      if (!/interrupted by another navigation/.test(error.message)) throw error
+    })
+    await expect(volunteerPage).toHaveURL(/\/check-in$/)
+    await volunteerContext.close()
   })
 
   await test.step('sign out from the account sheet', async () => {

@@ -1,7 +1,12 @@
 import { Link, createFileRoute, redirect, useHydrated, useRouter } from '@tanstack/react-router'
+import { CircleCheck, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
+import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Button } from '#/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
+import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
 import { formText } from '#/lib/form'
@@ -27,7 +32,7 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const search = Route.useSearch()
   const router = useRouter()
-  const [error, setError] = useState<{ tone: 'red' | 'amber'; text: string }>()
+  const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
   const hydrated = useHydrated()
 
@@ -44,8 +49,10 @@ function LoginPage() {
     if (error) {
       setError(
         error.status === 403
-          ? { tone: 'amber', text: 'Confirm your email first. We just sent you a new link.' }
-          : { tone: 'red', text: error.status === 429 ? error.message! : 'Incorrect email or password.' },
+          ? 'Confirm your email first. We just sent you a new link.'
+          : error.status === 429
+            ? (error.message ?? 'Too many attempts. Please wait a minute.')
+            : 'Incorrect email or password.',
       )
       setPending(false)
       return
@@ -67,27 +74,43 @@ function LoginPage() {
         </p>
       }
     >
-      {search.passwordSet && (
-        <div className="mb-4">
-          <Alert tone="green">Your password is set. Sign in with it below.</Alert>
-        </div>
-      )}
-      <form method="post" onSubmit={onSubmit} className="space-y-4">
-        <Field label="Email">
-          <Input type="email" name="email" inputMode="email" autoComplete="username" autoCapitalize="none" required />
-        </Field>
-        <Field label="Password">
-          <Input type="password" name="password" autoComplete="current-password" required />
-        </Field>
-        {error && <Alert tone={error.tone}>{error.text}</Alert>}
-        <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
-          {pending && <Spinner />} Sign in
-        </Button>
-        <p className="text-center text-sm">
-          <Link to="/forgot-password" className="font-medium text-zinc-500 hover:text-zinc-900">
+      <form method="post" onSubmit={onSubmit}>
+        <FieldGroup>
+          {search.passwordSet && (
+            <Alert>
+              <CircleCheck className="text-emerald-600" />
+              <AlertDescription>Your password is set. Sign in with it below.</AlertDescription>
+            </Alert>
+          )}
+          <Field>
+            <FieldLabel htmlFor="login-email">Email</FieldLabel>
+            <Input
+              id="login-email"
+              type="email"
+              name="email"
+              inputMode="email"
+              autoComplete="username"
+              autoCapitalize="none"
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="login-password">Password</FieldLabel>
+            <Input id="login-password" type="password" name="password" autoComplete="current-password" required />
+          </Field>
+          {error && (
+            <Alert variant="destructive">
+              <TriangleAlert />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <Button type="submit" size="lg" disabled={!hydrated || pending}>
+            {pending && <Spinner />} Sign in
+          </Button>
+          <Link to="/forgot-password" className="text-center text-sm text-muted-foreground hover:text-foreground">
             Forgot your password?
           </Link>
-        </p>
+        </FieldGroup>
       </form>
     </AuthCard>
   )

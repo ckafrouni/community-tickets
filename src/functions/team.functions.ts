@@ -5,7 +5,14 @@ import { requireEventAccess } from '#/server/access.server'
 import { auth, createUserWithoutPassword } from '#/server/auth/auth.server'
 import { INVITE_PARAM, sendAddedToEventEmail } from '#/server/email.server'
 import { authMiddleware } from '#/server/middleware'
-import { addMember, countHosts, findUserByEmail, getMemberRole, listMembers, removeMember } from '#/server/repo.server'
+import {
+  addMember,
+  countOrganizers,
+  findUserByEmail,
+  getMemberRole,
+  listMembers,
+  removeMember,
+} from '#/server/repo.server'
 import { getBaseUrl } from '#/server/request.server'
 
 const memberRef = eventIdSchema.extend({ userId: z.string().min(1).max(64) })
@@ -20,7 +27,7 @@ export const listMembersFn = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .validator(eventIdSchema)
   .handler(async ({ data, context }) => {
-    await requireEventAccess(context.user, data.eventId, 'host')
+    await requireEventAccess(context.user, data.eventId, 'organizer')
     return { members: await listMembers(data.eventId), currentUserId: context.user.id }
   })
 
@@ -28,7 +35,7 @@ export const addMemberFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(memberSchema.extend(eventIdSchema.shape))
   .handler(async ({ data, context }) => {
-    const { event } = await requireEventAccess(context.user, data.eventId, 'host')
+    const { event } = await requireEventAccess(context.user, data.eventId, 'organizer')
     const existing = await findUserByEmail(data.email)
     if (existing) {
       if (await getMemberRole(event.id, existing.id)) throw new Error(`${existing.email} is already on the team.`)
@@ -46,7 +53,7 @@ export const resendInviteFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(memberRef)
   .handler(async ({ data, context }) => {
-    await requireEventAccess(context.user, data.eventId, 'host')
+    await requireEventAccess(context.user, data.eventId, 'organizer')
     const member = (await listMembers(data.eventId)).find((m) => m.userId === data.userId)
     if (!member) throw new Error('Not on the team.')
     await sendInvite(data.eventId, member.email)
@@ -57,11 +64,11 @@ export const removeMemberFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(memberRef)
   .handler(async ({ data, context }) => {
-    await requireEventAccess(context.user, data.eventId, 'host')
+    await requireEventAccess(context.user, data.eventId, 'organizer')
     const role = await getMemberRole(data.eventId, data.userId)
     if (!role) throw new Error('Not on the team.')
-    if (role === 'host' && (await countHosts(data.eventId)) <= 1) {
-      throw new Error('An event needs at least one host. Add another host first.')
+    if (role === 'organizer' && (await countOrganizers(data.eventId)) <= 1) {
+      throw new Error('An event needs at least one organizer. Add another organizer first.')
     }
     await removeMember(data.eventId, data.userId)
     return { ok: true }

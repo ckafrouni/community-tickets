@@ -1,7 +1,12 @@
 import { Link, createFileRoute, redirect, useHydrated } from '@tanstack/react-router'
+import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { AuthCard, authLinkClass } from '#/components/AuthCard'
-import { Alert, Button, Field, Input, Spinner } from '#/components/ui'
+import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Button } from '#/components/ui/button'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
+import { Spinner } from '#/components/ui/spinner'
 import { getLoginStatusFn } from '#/functions/auth.functions'
 import { authClient } from '#/lib/auth-client'
 import { formText } from '#/lib/form'
@@ -56,9 +61,9 @@ function SignupPage() {
           </p>
         }
       >
-        <p className="text-[15px] text-zinc-600">
-          Open the email and tap <strong>Confirm email</strong> to finish creating your account. The link works for 24
-          hours. Can't find it? Check your spam folder.
+        <p className="text-[15px] text-muted-foreground">
+          Open the email and tap <strong className="text-foreground">Confirm email</strong> to finish creating your
+          account. The link works for 24 hours. Can't find it? Check your spam folder.
         </p>
       </AuthCard>
     )
@@ -67,7 +72,7 @@ function SignupPage() {
   return (
     <AuthCard
       title="Create an account"
-      subtitle="Run events, sell tickets for cash and check guests in."
+      subtitle="Run events, sell tickets and check guests in."
       footer={
         <p>
           Have an account?{' '}
@@ -77,20 +82,46 @@ function SignupPage() {
         </p>
       }
     >
-      <form method="post" onSubmit={onSubmit} className="space-y-4">
-        <Field label="Your name">
-          <Input name="name" autoComplete="name" autoCapitalize="words" required />
-        </Field>
-        <Field label="Email">
-          <Input type="email" name="email" inputMode="email" autoComplete="email" autoCapitalize="none" required />
-        </Field>
-        <Field label="Password" hint={`At least ${MIN_LENGTH} characters.`}>
-          <Input type="password" name="password" autoComplete="new-password" minLength={MIN_LENGTH} required />
-        </Field>
-        {error && <Alert tone="red">{error}</Alert>}
-        <Button type="submit" size="lg" className="w-full" disabled={!hydrated || pending}>
-          {pending && <Spinner />} Create account
-        </Button>
+      <form method="post" onSubmit={onSubmit}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="signup-name">Your name</FieldLabel>
+            <Input id="signup-name" name="name" autoComplete="name" autoCapitalize="words" required />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+            <Input
+              id="signup-email"
+              type="email"
+              name="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+            <Input
+              id="signup-password"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              minLength={MIN_LENGTH}
+              required
+            />
+            <FieldDescription>At least {MIN_LENGTH} characters.</FieldDescription>
+          </Field>
+          {error && (
+            <Alert variant="destructive">
+              <TriangleAlert />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <Button type="submit" size="lg" disabled={!hydrated || pending}>
+            {pending && <Spinner />} Create account
+          </Button>
+        </FieldGroup>
       </form>
     </AuthCard>
   )

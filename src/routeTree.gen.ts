@@ -21,14 +21,14 @@ import { Route as AppEventsEventIdRouteImport } from './routes/_app/events/$even
 import { Route as AppEventsNewRouteImport } from './routes/_app/events/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppEventsEventIdIndexRouteImport } from './routes/_app/events/$eventId/index'
-import { Route as AppEventsEventIdHostRouteImport } from './routes/_app/events/$eventId/_host'
+import { Route as AppEventsEventIdOrganizerRouteImport } from './routes/_app/events/$eventId/_organizer'
 import { Route as AppEventsEventIdCheckInRouteImport } from './routes/_app/events/$eventId/check-in'
 import { Route as ApiEventsEventIdGuestsDotcsvRouteImport } from './routes/api/events/$eventId/guests[.]csv'
-import { Route as AppEventsEventIdHostSellRouteImport } from './routes/_app/events/$eventId/_host/sell'
-import { Route as AppEventsEventIdHostSettingsRouteImport } from './routes/_app/events/$eventId/_host/settings'
-import { Route as AppEventsEventIdHostTeamRouteImport } from './routes/_app/events/$eventId/_host/team'
-import { Route as AppEventsEventIdHostGuestsIndexRouteImport } from './routes/_app/events/$eventId/_host/guests/index'
-import { Route as AppEventsEventIdHostGuestsOrderIdRouteImport } from './routes/_app/events/$eventId/_host/guests/$orderId'
+import { Route as AppEventsEventIdOrganizerSellRouteImport } from './routes/_app/events/$eventId/_organizer/sell'
+import { Route as AppEventsEventIdOrganizerSettingsRouteImport } from './routes/_app/events/$eventId/_organizer/settings'
+import { Route as AppEventsEventIdOrganizerTeamRouteImport } from './routes/_app/events/$eventId/_organizer/team'
+import { Route as AppEventsEventIdOrganizerGuestsIndexRouteImport } from './routes/_app/events/$eventId/_organizer/guests/index'
+import { Route as AppEventsEventIdOrganizerGuestsOrderIdRouteImport } from './routes/_app/events/$eventId/_organizer/guests/$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -89,10 +89,11 @@ const AppEventsEventIdIndexRoute = AppEventsEventIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppEventsEventIdRoute,
 } as any)
-const AppEventsEventIdHostRoute = AppEventsEventIdHostRouteImport.update({
-  id: '/_host',
-  getParentRoute: () => AppEventsEventIdRoute,
-} as any)
+const AppEventsEventIdOrganizerRoute =
+  AppEventsEventIdOrganizerRouteImport.update({
+    id: '/_organizer',
+    getParentRoute: () => AppEventsEventIdRoute,
+  } as any)
 const AppEventsEventIdCheckInRoute = AppEventsEventIdCheckInRouteImport.update({
   id: '/check-in',
   path: '/check-in',
@@ -104,35 +105,35 @@ const ApiEventsEventIdGuestsDotcsvRoute =
     path: '/api/events/$eventId/guests.csv',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppEventsEventIdHostSellRoute =
-  AppEventsEventIdHostSellRouteImport.update({
+const AppEventsEventIdOrganizerSellRoute =
+  AppEventsEventIdOrganizerSellRouteImport.update({
     id: '/sell',
     path: '/sell',
-    getParentRoute: () => AppEventsEventIdHostRoute,
+    getParentRoute: () => AppEventsEventIdOrganizerRoute,
   } as any)
-const AppEventsEventIdHostSettingsRoute =
-  AppEventsEventIdHostSettingsRouteImport.update({
+const AppEventsEventIdOrganizerSettingsRoute =
+  AppEventsEventIdOrganizerSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => AppEventsEventIdHostRoute,
+    getParentRoute: () => AppEventsEventIdOrganizerRoute,
   } as any)
-const AppEventsEventIdHostTeamRoute =
-  AppEventsEventIdHostTeamRouteImport.update({
+const AppEventsEventIdOrganizerTeamRoute =
+  AppEventsEventIdOrganizerTeamRouteImport.update({
     id: '/team',
     path: '/team',
-    getParentRoute: () => AppEventsEventIdHostRoute,
+    getParentRoute: () => AppEventsEventIdOrganizerRoute,
   } as any)
-const AppEventsEventIdHostGuestsIndexRoute =
-  AppEventsEventIdHostGuestsIndexRouteImport.update({
+const AppEventsEventIdOrganizerGuestsIndexRoute =
+  AppEventsEventIdOrganizerGuestsIndexRouteImport.update({
     id: '/guests/',
     path: '/guests/',
-    getParentRoute: () => AppEventsEventIdHostRoute,
+    getParentRoute: () => AppEventsEventIdOrganizerRoute,
   } as any)
-const AppEventsEventIdHostGuestsOrderIdRoute =
-  AppEventsEventIdHostGuestsOrderIdRouteImport.update({
+const AppEventsEventIdOrganizerGuestsOrderIdRoute =
+  AppEventsEventIdOrganizerGuestsOrderIdRouteImport.update({
     id: '/guests/$orderId',
     path: '/guests/$orderId',
-    getParentRoute: () => AppEventsEventIdHostRoute,
+    getParentRoute: () => AppEventsEventIdOrganizerRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -149,11 +150,11 @@ export interface FileRoutesByFullPath {
   '/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
   '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
   '/events/$eventId/': typeof AppEventsEventIdIndexRoute
-  '/events/$eventId/sell': typeof AppEventsEventIdHostSellRoute
-  '/events/$eventId/settings': typeof AppEventsEventIdHostSettingsRoute
-  '/events/$eventId/team': typeof AppEventsEventIdHostTeamRoute
-  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
-  '/events/$eventId/guests/': typeof AppEventsEventIdHostGuestsIndexRoute
+  '/events/$eventId/sell': typeof AppEventsEventIdOrganizerSellRoute
+  '/events/$eventId/settings': typeof AppEventsEventIdOrganizerSettingsRoute
+  '/events/$eventId/team': typeof AppEventsEventIdOrganizerTeamRoute
+  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdOrganizerGuestsOrderIdRoute
+  '/events/$eventId/guests/': typeof AppEventsEventIdOrganizerGuestsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -168,11 +169,11 @@ export interface FileRoutesByTo {
   '/events/$eventId': typeof AppEventsEventIdIndexRoute
   '/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
   '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
-  '/events/$eventId/sell': typeof AppEventsEventIdHostSellRoute
-  '/events/$eventId/settings': typeof AppEventsEventIdHostSettingsRoute
-  '/events/$eventId/team': typeof AppEventsEventIdHostTeamRoute
-  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
-  '/events/$eventId/guests': typeof AppEventsEventIdHostGuestsIndexRoute
+  '/events/$eventId/sell': typeof AppEventsEventIdOrganizerSellRoute
+  '/events/$eventId/settings': typeof AppEventsEventIdOrganizerSettingsRoute
+  '/events/$eventId/team': typeof AppEventsEventIdOrganizerTeamRoute
+  '/events/$eventId/guests/$orderId': typeof AppEventsEventIdOrganizerGuestsOrderIdRoute
+  '/events/$eventId/guests': typeof AppEventsEventIdOrganizerGuestsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,15 +188,15 @@ export interface FileRoutesById {
   '/_app/events/new': typeof AppEventsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/events/': typeof AppEventsIndexRoute
-  '/_app/events/$eventId/_host': typeof AppEventsEventIdHostRouteWithChildren
+  '/_app/events/$eventId/_organizer': typeof AppEventsEventIdOrganizerRouteWithChildren
   '/_app/events/$eventId/check-in': typeof AppEventsEventIdCheckInRoute
   '/api/events/$eventId/guests.csv': typeof ApiEventsEventIdGuestsDotcsvRoute
   '/_app/events/$eventId/': typeof AppEventsEventIdIndexRoute
-  '/_app/events/$eventId/_host/sell': typeof AppEventsEventIdHostSellRoute
-  '/_app/events/$eventId/_host/settings': typeof AppEventsEventIdHostSettingsRoute
-  '/_app/events/$eventId/_host/team': typeof AppEventsEventIdHostTeamRoute
-  '/_app/events/$eventId/_host/guests/$orderId': typeof AppEventsEventIdHostGuestsOrderIdRoute
-  '/_app/events/$eventId/_host/guests/': typeof AppEventsEventIdHostGuestsIndexRoute
+  '/_app/events/$eventId/_organizer/sell': typeof AppEventsEventIdOrganizerSellRoute
+  '/_app/events/$eventId/_organizer/settings': typeof AppEventsEventIdOrganizerSettingsRoute
+  '/_app/events/$eventId/_organizer/team': typeof AppEventsEventIdOrganizerTeamRoute
+  '/_app/events/$eventId/_organizer/guests/$orderId': typeof AppEventsEventIdOrganizerGuestsOrderIdRoute
+  '/_app/events/$eventId/_organizer/guests/': typeof AppEventsEventIdOrganizerGuestsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,15 +251,15 @@ export interface FileRouteTypes {
     | '/_app/events/new'
     | '/api/auth/$'
     | '/_app/events/'
-    | '/_app/events/$eventId/_host'
+    | '/_app/events/$eventId/_organizer'
     | '/_app/events/$eventId/check-in'
     | '/api/events/$eventId/guests.csv'
     | '/_app/events/$eventId/'
-    | '/_app/events/$eventId/_host/sell'
-    | '/_app/events/$eventId/_host/settings'
-    | '/_app/events/$eventId/_host/team'
-    | '/_app/events/$eventId/_host/guests/$orderId'
-    | '/_app/events/$eventId/_host/guests/'
+    | '/_app/events/$eventId/_organizer/sell'
+    | '/_app/events/$eventId/_organizer/settings'
+    | '/_app/events/$eventId/_organizer/team'
+    | '/_app/events/$eventId/_organizer/guests/$orderId'
+    | '/_app/events/$eventId/_organizer/guests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -359,11 +360,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEventsEventIdIndexRouteImport
       parentRoute: typeof AppEventsEventIdRoute
     }
-    '/_app/events/$eventId/_host': {
-      id: '/_app/events/$eventId/_host'
+    '/_app/events/$eventId/_organizer': {
+      id: '/_app/events/$eventId/_organizer'
       path: ''
       fullPath: '/events/$eventId'
-      preLoaderRoute: typeof AppEventsEventIdHostRouteImport
+      preLoaderRoute: typeof AppEventsEventIdOrganizerRouteImport
       parentRoute: typeof AppEventsEventIdRoute
     }
     '/_app/events/$eventId/check-in': {
@@ -380,72 +381,77 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEventsEventIdGuestsDotcsvRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/events/$eventId/_host/sell': {
-      id: '/_app/events/$eventId/_host/sell'
+    '/_app/events/$eventId/_organizer/sell': {
+      id: '/_app/events/$eventId/_organizer/sell'
       path: '/sell'
       fullPath: '/events/$eventId/sell'
-      preLoaderRoute: typeof AppEventsEventIdHostSellRouteImport
-      parentRoute: typeof AppEventsEventIdHostRoute
+      preLoaderRoute: typeof AppEventsEventIdOrganizerSellRouteImport
+      parentRoute: typeof AppEventsEventIdOrganizerRoute
     }
-    '/_app/events/$eventId/_host/settings': {
-      id: '/_app/events/$eventId/_host/settings'
+    '/_app/events/$eventId/_organizer/settings': {
+      id: '/_app/events/$eventId/_organizer/settings'
       path: '/settings'
       fullPath: '/events/$eventId/settings'
-      preLoaderRoute: typeof AppEventsEventIdHostSettingsRouteImport
-      parentRoute: typeof AppEventsEventIdHostRoute
+      preLoaderRoute: typeof AppEventsEventIdOrganizerSettingsRouteImport
+      parentRoute: typeof AppEventsEventIdOrganizerRoute
     }
-    '/_app/events/$eventId/_host/team': {
-      id: '/_app/events/$eventId/_host/team'
+    '/_app/events/$eventId/_organizer/team': {
+      id: '/_app/events/$eventId/_organizer/team'
       path: '/team'
       fullPath: '/events/$eventId/team'
-      preLoaderRoute: typeof AppEventsEventIdHostTeamRouteImport
-      parentRoute: typeof AppEventsEventIdHostRoute
+      preLoaderRoute: typeof AppEventsEventIdOrganizerTeamRouteImport
+      parentRoute: typeof AppEventsEventIdOrganizerRoute
     }
-    '/_app/events/$eventId/_host/guests/': {
-      id: '/_app/events/$eventId/_host/guests/'
+    '/_app/events/$eventId/_organizer/guests/': {
+      id: '/_app/events/$eventId/_organizer/guests/'
       path: '/guests'
       fullPath: '/events/$eventId/guests/'
-      preLoaderRoute: typeof AppEventsEventIdHostGuestsIndexRouteImport
-      parentRoute: typeof AppEventsEventIdHostRoute
+      preLoaderRoute: typeof AppEventsEventIdOrganizerGuestsIndexRouteImport
+      parentRoute: typeof AppEventsEventIdOrganizerRoute
     }
-    '/_app/events/$eventId/_host/guests/$orderId': {
-      id: '/_app/events/$eventId/_host/guests/$orderId'
+    '/_app/events/$eventId/_organizer/guests/$orderId': {
+      id: '/_app/events/$eventId/_organizer/guests/$orderId'
       path: '/guests/$orderId'
       fullPath: '/events/$eventId/guests/$orderId'
-      preLoaderRoute: typeof AppEventsEventIdHostGuestsOrderIdRouteImport
-      parentRoute: typeof AppEventsEventIdHostRoute
+      preLoaderRoute: typeof AppEventsEventIdOrganizerGuestsOrderIdRouteImport
+      parentRoute: typeof AppEventsEventIdOrganizerRoute
     }
   }
 }
 
-interface AppEventsEventIdHostRouteChildren {
-  AppEventsEventIdHostSellRoute: typeof AppEventsEventIdHostSellRoute
-  AppEventsEventIdHostSettingsRoute: typeof AppEventsEventIdHostSettingsRoute
-  AppEventsEventIdHostTeamRoute: typeof AppEventsEventIdHostTeamRoute
-  AppEventsEventIdHostGuestsOrderIdRoute: typeof AppEventsEventIdHostGuestsOrderIdRoute
-  AppEventsEventIdHostGuestsIndexRoute: typeof AppEventsEventIdHostGuestsIndexRoute
+interface AppEventsEventIdOrganizerRouteChildren {
+  AppEventsEventIdOrganizerSellRoute: typeof AppEventsEventIdOrganizerSellRoute
+  AppEventsEventIdOrganizerSettingsRoute: typeof AppEventsEventIdOrganizerSettingsRoute
+  AppEventsEventIdOrganizerTeamRoute: typeof AppEventsEventIdOrganizerTeamRoute
+  AppEventsEventIdOrganizerGuestsOrderIdRoute: typeof AppEventsEventIdOrganizerGuestsOrderIdRoute
+  AppEventsEventIdOrganizerGuestsIndexRoute: typeof AppEventsEventIdOrganizerGuestsIndexRoute
 }
 
-const AppEventsEventIdHostRouteChildren: AppEventsEventIdHostRouteChildren = {
-  AppEventsEventIdHostSellRoute: AppEventsEventIdHostSellRoute,
-  AppEventsEventIdHostSettingsRoute: AppEventsEventIdHostSettingsRoute,
-  AppEventsEventIdHostTeamRoute: AppEventsEventIdHostTeamRoute,
-  AppEventsEventIdHostGuestsOrderIdRoute:
-    AppEventsEventIdHostGuestsOrderIdRoute,
-  AppEventsEventIdHostGuestsIndexRoute: AppEventsEventIdHostGuestsIndexRoute,
-}
+const AppEventsEventIdOrganizerRouteChildren: AppEventsEventIdOrganizerRouteChildren =
+  {
+    AppEventsEventIdOrganizerSellRoute: AppEventsEventIdOrganizerSellRoute,
+    AppEventsEventIdOrganizerSettingsRoute:
+      AppEventsEventIdOrganizerSettingsRoute,
+    AppEventsEventIdOrganizerTeamRoute: AppEventsEventIdOrganizerTeamRoute,
+    AppEventsEventIdOrganizerGuestsOrderIdRoute:
+      AppEventsEventIdOrganizerGuestsOrderIdRoute,
+    AppEventsEventIdOrganizerGuestsIndexRoute:
+      AppEventsEventIdOrganizerGuestsIndexRoute,
+  }
 
-const AppEventsEventIdHostRouteWithChildren =
-  AppEventsEventIdHostRoute._addFileChildren(AppEventsEventIdHostRouteChildren)
+const AppEventsEventIdOrganizerRouteWithChildren =
+  AppEventsEventIdOrganizerRoute._addFileChildren(
+    AppEventsEventIdOrganizerRouteChildren,
+  )
 
 interface AppEventsEventIdRouteChildren {
-  AppEventsEventIdHostRoute: typeof AppEventsEventIdHostRouteWithChildren
+  AppEventsEventIdOrganizerRoute: typeof AppEventsEventIdOrganizerRouteWithChildren
   AppEventsEventIdCheckInRoute: typeof AppEventsEventIdCheckInRoute
   AppEventsEventIdIndexRoute: typeof AppEventsEventIdIndexRoute
 }
 
 const AppEventsEventIdRouteChildren: AppEventsEventIdRouteChildren = {
-  AppEventsEventIdHostRoute: AppEventsEventIdHostRouteWithChildren,
+  AppEventsEventIdOrganizerRoute: AppEventsEventIdOrganizerRouteWithChildren,
   AppEventsEventIdCheckInRoute: AppEventsEventIdCheckInRoute,
   AppEventsEventIdIndexRoute: AppEventsEventIdIndexRoute,
 }

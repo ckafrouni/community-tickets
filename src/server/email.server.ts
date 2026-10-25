@@ -28,7 +28,7 @@ function greet(name: string) {
 }
 
 export function roleLabel(role: EventRole) {
-  return role === 'host' ? 'a host' : 'door staff'
+  return role === 'organizer' ? 'an organizer' : 'a volunteer'
 }
 
 export async function sendTicketEmail(

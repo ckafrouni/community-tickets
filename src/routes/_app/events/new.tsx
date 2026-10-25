@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { AppHeader, Main } from '#/components/AppHeader'
+import { PageHeader } from '#/components/common'
 import { EventForm } from '#/components/EventForm'
 import { createEventFn } from '#/functions/events.functions'
 import { NEW_EVENT } from '#/lib/schemas'
@@ -15,7 +16,7 @@ function NewEventPage() {
     <>
       <AppHeader back title="New event" />
       <Main>
-        <h1 className="mb-5 text-[28px] leading-tight font-bold tracking-tight">Create an event</h1>
+        <PageHeader title="Create an event" />
         <EventForm
           initial={NEW_EVENT}
           submitLabel="Create event"

@@ -70,7 +70,7 @@ export async function createEvent(input: EventInput, userId: string): Promise<st
   const createdAt = nowIso()
   await db.batch([
     db.insert(events).values({ id, ...input, createdBy: userId, createdAt }),
-    db.insert(eventMembers).values({ eventId: id, userId, role: 'host', createdAt }),
+    db.insert(eventMembers).values({ eventId: id, userId, role: 'organizer', createdAt }),
   ])
   return id
 }
@@ -98,7 +98,7 @@ export async function listEventsForUser(userId: string, isAdmin: boolean): Promi
   const query = db
     .select({
       ...eventFields,
-      role: sql<EventRole>`coalesce(${eventMembers.role}, 'host')`,
+      role: sql<EventRole>`coalesce(${eventMembers.role}, 'organizer')`,
       ticketsSold: sql<number>`(${sold})`.mapWith(Number),
       checkedIn: sql<number>`(${arrived})`.mapWith(Number),
     })
@@ -139,8 +139,8 @@ export async function removeMember(eventId: string, userId: string) {
   await db.delete(eventMembers).where(and(eq(eventMembers.eventId, eventId), eq(eventMembers.userId, userId)))
 }
 
-export function countHosts(eventId: string): Promise<number> {
-  return db.$count(eventMembers, and(eq(eventMembers.eventId, eventId), eq(eventMembers.role, 'host')))
+export function countOrganizers(eventId: string): Promise<number> {
+  return db.$count(eventMembers, and(eq(eventMembers.eventId, eventId), eq(eventMembers.role, 'organizer')))
 }
 
 export async function findUserByEmail(email: string) {

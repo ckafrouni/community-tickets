@@ -4,7 +4,12 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig, lazyPlugins } from 'vite-plus'
 
-const GENERATED_FILES = ['src/routeTree.gen.ts', 'migrations/**', 'src/server/db/auth-schema.ts']
+const GENERATED_FILES = [
+  'src/routeTree.gen.ts',
+  'migrations/**',
+  'src/server/db/auth-schema.ts',
+  'src/components/ui/**',
+]
 
 export default defineConfig(({ mode }) => ({
   staged: {

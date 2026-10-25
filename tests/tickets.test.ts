@@ -106,7 +106,6 @@ const sale: SaleInput = {
   notes: '',
   quantity: 3,
   amount: 3000,
-  sendEmail: false,
 }
 
 async function makeUser(name = 'Host') {
@@ -125,10 +124,10 @@ describe('events and teams (D1)', () => {
   it('makes the creator a host and lists the event for them only', async () => {
     const { eventId, host } = await makeEvent()
     const stranger = await makeUser('Stranger')
-    expect(await repo.getMemberRole(eventId, host)).toBe('host')
+    expect(await repo.getMemberRole(eventId, host)).toBe('organizer')
     expect((await repo.listEventsForUser(host, false)).map((e) => e.id)).toContain(eventId)
     expect((await repo.listEventsForUser(stranger, false)).map((e) => e.id)).not.toContain(eventId)
-    expect((await repo.listEventsForUser(stranger, true)).find((e) => e.id === eventId)?.role).toBe('host')
+    expect((await repo.listEventsForUser(stranger, true)).find((e) => e.id === eventId)?.role).toBe('organizer')
   })
 
   it('counts sales and arrivals per event', async () => {
@@ -145,11 +144,11 @@ describe('events and teams (D1)', () => {
   it('adds, re-roles and removes team members', async () => {
     const { eventId } = await makeEvent()
     const volunteer = await makeUser('Volunteer')
-    await repo.addMember(eventId, volunteer, 'door')
-    expect(await repo.getMemberRole(eventId, volunteer)).toBe('door')
-    expect(await repo.countHosts(eventId)).toBe(1)
-    await repo.addMember(eventId, volunteer, 'host')
-    expect(await repo.countHosts(eventId)).toBe(2)
+    await repo.addMember(eventId, volunteer, 'volunteer')
+    expect(await repo.getMemberRole(eventId, volunteer)).toBe('volunteer')
+    expect(await repo.countOrganizers(eventId)).toBe(1)
+    await repo.addMember(eventId, volunteer, 'organizer')
+    expect(await repo.countOrganizers(eventId)).toBe(2)
     expect((await repo.listMembers(eventId)).map((m) => m.name)).toEqual(['Host', 'Volunteer'])
     await repo.removeMember(eventId, volunteer)
     expect(await repo.getMemberRole(eventId, volunteer)).toBeNull()
